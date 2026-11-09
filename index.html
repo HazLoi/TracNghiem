@@ -29,6 +29,24 @@
         <option value="hard">Bộ 2 - Đề cương ôn tập Quân y (256 câu)</option>
       </select>
     </div>
+    <section class="import-tools" aria-labelledby="import-title">
+      <h2 id="import-title">Thêm mã đề từ Excel</h2>
+      <div class="form-group">
+        <label for="excel-file">Chọn file Excel (.xlsx hoặc .xls):</label>
+        <input id="excel-file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      </div>
+      <div id="excel-sheet-group" class="form-group" hidden>
+        <label for="excel-sheet">Chọn sheet câu hỏi:</label>
+        <select id="excel-sheet"></select>
+      </div>
+      <div id="excel-name-group" class="form-group" hidden>
+        <label for="excel-exam-name">Tên mã đề:</label>
+        <input id="excel-exam-name" type="text" maxlength="80" placeholder="Nhập tên bộ đề">
+      </div>
+      <button id="import-exam-btn" class="main-btn" type="button" disabled>Thêm bộ đề vào ứng dụng</button>
+      <button id="delete-exam-btn" class="main-btn delete-exam-btn" type="button" hidden>Xóa bộ đề Excel đang chọn</button>
+      <p id="excel-import-status" class="small-note" role="status" aria-live="polite">File cần có các cột STT, Tên câu hỏi, Đáp án A-D và Đáp án đúng.</p>
+    </section>
     <div class="form-group">
       <label for="num-questions">Số câu muốn làm:</label>
       <input type="number" id="num-questions" value="20" min="1" max="1000" inputmode="numeric">
@@ -79,6 +97,7 @@
   </div>
 </div>
 
+<script src="./vendor/xlsx.full.min.js" defer></script>
 <script src="./app.js" defer></script>
 </body>
 </html>

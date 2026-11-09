@@ -4,11 +4,15 @@
 
 
 const PROGRESS_STORAGE_KEY = 'quanYQuizTienDo_v1';
+const CUSTOM_EXAMS_STORAGE_KEY = 'quanYQuizBoDeExcel_v1';
+const CUSTOM_EXAMS_DB_NAME = 'quanYQuizBoDeExcel';
+const CUSTOM_EXAMS_DB_STORE = 'questionSets';
 const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const QUESTION_SETS = {
-  easy: { count: 1000, file: './questions-easy.json' },
-  hard: { count: 256, file: './questions-hard.json' }
+  easy: { count: 1000, file: './questions-easy.json', name: 'Tổ chức chiến thuật quân y - 1.000 câu' },
+  hard: { count: 256, file: './questions-hard.json', name: 'Đề cương ôn tập Quân y - 256 câu' }
 };
+const customExamCatalog = loadCustomExamCatalog();
 const loadedQuestionPools = new Map();
 const questionIndexes = new Map();
 let activeQuestions = [];
@@ -25,6 +29,8 @@ let selectedSourceLetter = null;
 let autoAdvanceAt = null;
 let autoAdvanceTimer = null;
 let selectedExamName = '';
+let pendingWorkbook = null;
+let validExcelSheets = [];
 
 const examSelect = document.getElementById('exam-select');
 const numQuestionsInput = document.getElementById('num-questions');
@@ -50,16 +56,97 @@ const feedbackBox = document.getElementById('feedback-box');
 const retrySection = document.getElementById('retry-section');
 let pausedForBackground = false;
 
+const excelFileInput = document.getElementById('excel-file');
+const excelSheetGroup = document.getElementById('excel-sheet-group');
+const excelSheetSelect = document.getElementById('excel-sheet');
+const excelNameGroup = document.getElementById('excel-name-group');
+const excelExamNameInput = document.getElementById('excel-exam-name');
+const importExamButton = document.getElementById('import-exam-btn');
+const deleteExamButton = document.getElementById('delete-exam-btn');
+const excelImportStatus = document.getElementById('excel-import-status');
+
+function loadCustomExamCatalog() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_EXAMS_STORAGE_KEY) || '[]');
+    return Array.isArray(saved) ? saved.filter(item => item && typeof item.id === 'string'
+      && typeof item.name === 'string' && Number.isInteger(item.count) && item.count > 0) : [];
+  } catch (error) {
+    console.warn('Could not read the imported exam list.', error);
+    return [];
+  }
+}
+
+function getExamSet(examKey) {
+  return QUESTION_SETS[examKey] || customExamCatalog.find(item => item.id === examKey) || null;
+}
+
+function openCustomExamDB() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) {
+      reject(new Error('Trình duyệt này không hỗ trợ lưu bộ đề Excel.'));
+      return;
+    }
+    const request = indexedDB.open(CUSTOM_EXAMS_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(CUSTOM_EXAMS_DB_STORE)) {
+        request.result.createObjectStore(CUSTOM_EXAMS_DB_STORE, { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(new Error('Không mở được kho lưu bộ đề trên thiết bị.'));
+  });
+}
+
+async function storeCustomExam(id, questions) {
+  const db = await openCustomExamDB();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(CUSTOM_EXAMS_DB_STORE, 'readwrite');
+    transaction.objectStore(CUSTOM_EXAMS_DB_STORE).put({ id, questions });
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(new Error('Không lưu được bộ đề Excel trên thiết bị.'));
+    transaction.onabort = () => reject(new Error('Việc lưu bộ đề Excel đã bị hủy.'));
+  });
+  db.close();
+}
+
+async function readCustomExam(id) {
+  const db = await openCustomExamDB();
+  const record = await new Promise((resolve, reject) => {
+    const request = db.transaction(CUSTOM_EXAMS_DB_STORE, 'readonly')
+      .objectStore(CUSTOM_EXAMS_DB_STORE).get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(new Error('Không đọc được bộ đề Excel đã lưu.'));
+  });
+  db.close();
+  return record?.questions || null;
+}
+
+async function removeCustomExam(id) {
+  const db = await openCustomExamDB();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(CUSTOM_EXAMS_DB_STORE, 'readwrite');
+    transaction.objectStore(CUSTOM_EXAMS_DB_STORE).delete(id);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(new Error('Không xóa được bộ đề khỏi thiết bị.'));
+  });
+  db.close();
+}
+
 async function loadQuestionData(examKey) {
   if (loadedQuestionPools.has(examKey)) return loadedQuestionPools.get(examKey);
-  const set = QUESTION_SETS[examKey];
+  const set = getExamSet(examKey);
   if (!set) throw new Error('Bộ câu hỏi không hợp lệ.');
 
-  const response = await fetch(new URL(set.file, window.location.href));
-  if (!response.ok) throw new Error(`Không tải được dữ liệu câu hỏi (${response.status}).`);
-  const questions = await response.json();
+  let questions;
+  if (QUESTION_SETS[examKey]) {
+    const response = await fetch(new URL(set.file, window.location.href));
+    if (!response.ok) throw new Error(`Không tải được dữ liệu câu hỏi (${response.status}).`);
+    questions = await response.json();
+  } else {
+    questions = await readCustomExam(examKey);
+  }
   if (!Array.isArray(questions) || questions.length !== set.count) {
-    throw new Error(`Dữ liệu câu hỏi không hợp lệ: cần ${set.count} câu.`);
+    throw new Error('Dữ liệu câu hỏi không hợp lệ hoặc bộ đề Excel đã bị xóa khỏi thiết bị.');
   }
 
   const index = new Map();
@@ -89,15 +176,199 @@ async function loadQuestionData(examKey) {
 }
 
 function updateQuestionLimit() {
-  const max = QUESTION_SETS[examSelect.value].count;
+  const selectedSet = getExamSet(examSelect.value);
+  if (!selectedSet) return;
+  const max = selectedSet.count;
   numQuestionsInput.max = String(max);
   const current = Number.parseInt(numQuestionsInput.value, 10);
   if (!Number.isFinite(current) || current < 1) numQuestionsInput.value = '20';
   else if (current > max) numQuestionsInput.value = String(max);
   countError.style.display = 'none';
   countError.textContent = '';
+  deleteExamButton.hidden = !customExamCatalog.some(item => item.id === examSelect.value);
 }
 examSelect.addEventListener('change', updateQuestionLimit);
+
+function renderCustomExamOptions(selectedId = examSelect.value) {
+  examSelect.querySelectorAll('option[data-custom-exam="true"]').forEach(option => option.remove());
+  customExamCatalog.forEach(item => {
+    const option = document.createElement('option');
+    option.value = item.id;
+    option.textContent = `${item.name} (${item.count} câu)`;
+    option.dataset.customExam = 'true';
+    examSelect.appendChild(option);
+  });
+  if (getExamSet(selectedId)) examSelect.value = selectedId;
+  updateQuestionLimit();
+}
+
+function normalizeHeader(value) {
+  return String(value ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/đ/g, 'd').replace(/[^a-z0-9]/g, '');
+}
+
+function parseQuestionSheet(workbook, sheetName) {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) throw new Error('Không tìm thấy sheet đã chọn.');
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+  const columns = {
+    stt: ['stt', 'sothutu'],
+    question: ['tencauhoi', 'cauhoi', 'noidungcauhoi', 'question'],
+    A: ['dapana', 'phuonga', 'optiona', 'a'],
+    B: ['dapanb', 'phuongb', 'optionb', 'b'],
+    C: ['dapanc', 'phuongc', 'optionc', 'c'],
+    D: ['dapand', 'phuongd', 'optiond', 'd'],
+    answer: ['dapandung', 'dapanchinhxac', 'dapan', 'correctanswer', 'answer']
+  };
+  const headerRowIndex = rows.slice(0, 20).findIndex(row => {
+    const values = row.map(normalizeHeader);
+    return Object.values(columns).every(aliases => aliases.some(alias => values.includes(alias)));
+  });
+  if (headerRowIndex < 0) {
+    throw new Error('Không tìm thấy hàng tiêu đề. Cần các cột STT, Tên câu hỏi, Đáp án A-D, Đáp án đúng.');
+  }
+
+  const headerValues = rows[headerRowIndex].map(normalizeHeader);
+  const indexes = Object.fromEntries(Object.entries(columns).map(([key, aliases]) => [
+    key,
+    headerValues.findIndex(value => aliases.includes(value))
+  ]));
+  const questions = [];
+  const seenStts = new Set();
+  rows.slice(headerRowIndex + 1).forEach((row, offset) => {
+    if (row.every(value => String(value ?? '').trim() === '')) return;
+    const rowNumber = headerRowIndex + offset + 2;
+    const sttValue = Number(String(row[indexes.stt] ?? '').trim());
+    const questionText = String(row[indexes.question] ?? '').trim();
+    const options = QUESTION_LETTERS.map(letter => ({
+      letter,
+      text: String(row[indexes[letter]] ?? '').trim()
+    }));
+    const answerValue = String(row[indexes.answer] ?? '').trim().toUpperCase();
+    const answerMatch = answerValue.match(/^([ABCD])(?:\b|[.)\s:-]|$)/);
+    if (!Number.isInteger(sttValue) || sttValue < 1) {
+      throw new Error(`Dòng ${rowNumber}: STT phải là số nguyên dương.`);
+    }
+    if (seenStts.has(sttValue)) throw new Error(`Dòng ${rowNumber}: STT ${sttValue} bị trùng.`);
+    if (!questionText || options.some(option => !option.text)) {
+      throw new Error(`Dòng ${rowNumber}: câu hỏi và đủ bốn lựa chọn A-D không được để trống.`);
+    }
+    if (!answerMatch) throw new Error(`Dòng ${rowNumber}: đáp án đúng phải là A, B, C hoặc D.`);
+    seenStts.add(sttValue);
+    questions.push({ stt: sttValue, q: questionText, options, answer: answerMatch[1] });
+  });
+  if (!questions.length) throw new Error('Sheet không có dòng câu hỏi nào.');
+  return questions;
+}
+
+function setExcelImportStatus(message, state = '') {
+  excelImportStatus.textContent = message;
+  excelImportStatus.dataset.error = state === 'error' ? 'true' : 'false';
+  excelImportStatus.dataset.success = state === 'success' ? 'true' : 'false';
+}
+
+excelFileInput.addEventListener('change', async () => {
+  pendingWorkbook = null;
+  validExcelSheets = [];
+  importExamButton.disabled = true;
+  excelSheetGroup.hidden = true;
+  excelNameGroup.hidden = true;
+  const file = excelFileInput.files?.[0];
+  if (!file) return;
+  if (!/\.xlsx?$/i.test(file.name)) {
+    setExcelImportStatus('Chỉ hỗ trợ file Excel .xlsx hoặc .xls.', 'error');
+    return;
+  }
+  try {
+    const bytes = await file.arrayBuffer();
+    pendingWorkbook = XLSX.read(bytes, { type: 'array' });
+    validExcelSheets = pendingWorkbook.SheetNames.filter(sheetName => {
+      if (/mau\s*nhap|template/i.test(normalizeHeader(sheetName))) return false;
+      try {
+        parseQuestionSheet(pendingWorkbook, sheetName);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    });
+    if (!validExcelSheets.length) throw new Error('Không có sheet nào đúng định dạng mẫu.');
+    excelSheetSelect.replaceChildren(...validExcelSheets.map(sheetName => {
+      const option = document.createElement('option');
+      option.value = sheetName;
+      option.textContent = sheetName;
+      return option;
+    }));
+    excelSheetGroup.hidden = validExcelSheets.length < 2;
+    excelNameGroup.hidden = false;
+    excelExamNameInput.value = validExcelSheets[0];
+    importExamButton.disabled = false;
+    const count = parseQuestionSheet(pendingWorkbook, validExcelSheets[0]).length;
+    setExcelImportStatus(`Đã nhận diện ${validExcelSheets.length} sheet hợp lệ. Sheet đang chọn có ${count} câu.`);
+  } catch (error) {
+    pendingWorkbook = null;
+    setExcelImportStatus(error.message || 'Không đọc được file Excel.', 'error');
+  }
+});
+
+excelSheetSelect.addEventListener('change', () => {
+  if (!pendingWorkbook) return;
+  excelExamNameInput.value = excelSheetSelect.value;
+  const count = parseQuestionSheet(pendingWorkbook, excelSheetSelect.value).length;
+  setExcelImportStatus(`Sheet đang chọn có ${count} câu.`);
+});
+
+importExamButton.addEventListener('click', async () => {
+  if (!pendingWorkbook) return;
+  const name = excelExamNameInput.value.trim();
+  if (!name) {
+    setExcelImportStatus('Hãy nhập tên cho mã đề.', 'error');
+    excelExamNameInput.focus();
+    return;
+  }
+  importExamButton.disabled = true;
+  try {
+    const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const questions = parseQuestionSheet(pendingWorkbook, excelSheetSelect.value);
+    await storeCustomExam(id, questions);
+    customExamCatalog.push({ id, name, count: questions.length });
+    try {
+      localStorage.setItem(CUSTOM_EXAMS_STORAGE_KEY, JSON.stringify(customExamCatalog));
+    } catch (error) {
+      customExamCatalog.pop();
+      await removeCustomExam(id);
+      throw new Error('Không đủ dung lượng để lưu danh sách bộ đề trên thiết bị.');
+    }
+    loadedQuestionPools.set(id, questions);
+    questionIndexes.set(id, new Map(questions.map(question => [question.stt, question])));
+    renderCustomExamOptions(id);
+    setExcelImportStatus(`Đã thêm “${name}” gồm ${questions.length} câu. Bộ đề đã lưu trên thiết bị và dùng được offline.`, 'success');
+    excelFileInput.value = '';
+    pendingWorkbook = null;
+    validExcelSheets = [];
+    importExamButton.disabled = true;
+  } catch (error) {
+    setExcelImportStatus(error.message || 'Không thể lưu bộ đề Excel.', 'error');
+    importExamButton.disabled = false;
+  }
+});
+
+deleteExamButton.addEventListener('click', async () => {
+  const exam = customExamCatalog.find(item => item.id === examSelect.value);
+  if (!exam || !window.confirm(`Xóa bộ đề “${exam.name}” khỏi thiết bị?`)) return;
+  try {
+    await removeCustomExam(exam.id);
+    const catalogIndex = customExamCatalog.findIndex(item => item.id === exam.id);
+    customExamCatalog.splice(catalogIndex, 1);
+    localStorage.setItem(CUSTOM_EXAMS_STORAGE_KEY, JSON.stringify(customExamCatalog));
+    loadedQuestionPools.delete(exam.id);
+    questionIndexes.delete(exam.id);
+    if (readSavedProgress()?.examKey === exam.id) clearSavedProgress();
+    renderCustomExamOptions('easy');
+    setExcelImportStatus(`Đã xóa bộ đề “${exam.name}” khỏi thiết bị.`, 'success');
+  } catch (error) {
+    setExcelImportStatus(error.message || 'Không thể xóa bộ đề.', 'error');
+  }
+});
 
 function shuffleAndTake(array, count) {
   const copy = array.slice();
@@ -115,7 +386,13 @@ function showScreen(screenToShow) {
 }
 
 startBtn.addEventListener('click', async () => {
-  const max = QUESTION_SETS[examSelect.value].count;
+  const selectedSet = getExamSet(examSelect.value);
+  if (!selectedSet) {
+    countError.textContent = 'Vui lòng chọn một bộ đề hợp lệ.';
+    countError.style.display = 'block';
+    return;
+  }
+  const max = selectedSet.count;
   const rawCount = Number.parseInt(numQuestionsInput.value, 10);
   if (!Number.isInteger(rawCount) || rawCount < 1 || rawCount > max) {
     countError.textContent = `Vui lòng nhập số từ 1 đến ${max}.`;
@@ -129,9 +406,7 @@ startBtn.addEventListener('click', async () => {
   try {
     const pool = await loadQuestionData(examSelect.value);
     clearSavedProgress();
-    selectedExamName = examSelect.value === 'easy'
-      ? 'Tổ chức chiến thuật quân y - 1.000 câu'
-      : 'Đề cương ôn tập Quân y - 256 câu';
+    selectedExamName = selectedSet.name;
     sessionQuestions = shuffleAndTake(pool, rawCount);
     activeQuestions = sessionQuestions.slice();
     wrongQuestions = [];
@@ -275,7 +550,7 @@ function readSavedProgress() {
     return null;
   }
   if (!saved) return null;
-  if (!QUESTION_SETS[saved.examKey]) {
+  if (!getExamSet(saved.examKey)) {
     console.warn('Saved quiz progress has an invalid exam key.');
     clearSavedProgress();
     return null;
@@ -334,9 +609,7 @@ async function loadSavedProgress() {
     activeQuestions: restoredActive,
     wrongQuestions: restoredWrong,
     nextWrongQuestions: restoredNextWrong,
-    examName: saved.examKey === 'easy'
-      ? 'Tổ chức chiến thuật quân y - 1.000 câu'
-      : 'Đề cương ôn tập Quân y - 256 câu'
+    examName: getExamSet(saved.examKey).name
   };
 }
 
@@ -593,7 +866,7 @@ document.getElementById('restart-btn').addEventListener('click', () => {
   updateQuestionLimit();
 });
 
-updateQuestionLimit();
+renderCustomExamOptions();
 if (readSavedProgress()) {
   resumeBtn.style.display = 'block';
   progressSaveNote.textContent = 'Có bài làm đang lưu trên thiết bị này. Bạn có thể tiếp tục hoặc bắt đầu bài mới.';
