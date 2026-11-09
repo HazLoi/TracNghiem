@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v7';
+const CACHE_NAME = 'trac-nghiem-pwa-v8';
 const APP_SHELL = [
   './',
   './index.html',
@@ -68,6 +68,38 @@ self.addEventListener('fetch', (event) => {
       return response;
     } catch (error) {
       throw error;
+    }
+  })());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'REFRESH_APP') return;
+
+  const stagingCacheName = `${CACHE_NAME}-staging-${Date.now()}`;
+  const responsePort = event.ports[0];
+  event.waitUntil((async () => {
+    try {
+      const stagingCache = await caches.open(stagingCacheName);
+      for (const asset of APP_SHELL) {
+        const request = new Request(new URL(asset, self.registration.scope), { cache: 'no-store' });
+        const response = await fetch(request);
+        if (!response.ok) throw new Error(`Tải không thành công: ${asset}`);
+        await stagingCache.put(request, response);
+      }
+
+      const activeCache = await caches.open(CACHE_NAME);
+      for (const request of await stagingCache.keys()) {
+        await activeCache.put(request, await stagingCache.match(request));
+      }
+      await caches.delete(stagingCacheName);
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames
+        .filter(name => name.startsWith('trac-nghiem-pwa-') && name !== CACHE_NAME)
+        .map(name => caches.delete(name)));
+      responsePort?.postMessage({ ok: true });
+    } catch (error) {
+      await caches.delete(stagingCacheName);
+      responsePort?.postMessage({ ok: false, message: error.message });
     }
   })());
 });

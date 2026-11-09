@@ -41,6 +41,8 @@ const startBtn = document.getElementById('start-btn');
 const resumeBtn = document.getElementById('resume-btn');
 const progressSaveNote = document.getElementById('progress-save-note');
 const themeToggle = document.getElementById('theme-toggle');
+const refreshCacheButton = document.getElementById('refresh-cache-btn');
+const refreshCacheStatus = document.getElementById('refresh-cache-status');
 const importToggleButton = document.getElementById('import-toggle');
 const importPanel = document.getElementById('import-panel');
 const pauseBtn = document.getElementById('pause-btn');
@@ -94,6 +96,36 @@ function getInitialTheme() {
 
 applyTheme(getInitialTheme());
 themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'dark' : 'light', true));
+
+refreshCacheButton.addEventListener('click', async () => {
+  refreshCacheButton.disabled = true;
+  refreshCacheButton.textContent = 'Đang tải bản mới...';
+  refreshCacheStatus.textContent = 'Đang cập nhật giao diện và dữ liệu offline. Tiến độ, đề Excel và cài đặt sẽ được giữ nguyên.';
+  try {
+    const registration = await navigator.serviceWorker?.ready;
+    const worker = navigator.serviceWorker?.controller || registration?.active;
+    if (!worker) throw new Error('Chưa có service worker hoạt động. Hãy tải lại trang khi có mạng rồi thử lại.');
+
+    const channel = new MessageChannel();
+    const result = await new Promise((resolve, reject) => {
+      const timeout = window.setTimeout(() => reject(new Error('Cập nhật quá thời gian. Hãy thử lại khi kết nối mạng ổn định.')), 30000);
+      channel.port1.onmessage = event => {
+        window.clearTimeout(timeout);
+        resolve(event.data);
+      };
+      worker.postMessage({ type: 'REFRESH_APP' }, [channel.port2]);
+    });
+    if (!result?.ok) throw new Error(result?.message || 'Không thể cập nhật cache PWA.');
+
+    const refreshUrl = new URL(window.location.href);
+    refreshUrl.searchParams.set('refresh', String(Date.now()));
+    window.location.replace(refreshUrl.href);
+  } catch (error) {
+    refreshCacheButton.disabled = false;
+    refreshCacheButton.textContent = 'Thử xóa cache và tải lại';
+    refreshCacheStatus.textContent = `${error.message} Dữ liệu bài làm và bộ đề vẫn được giữ nguyên.`;
+  }
+});
 
 importToggleButton.addEventListener('click', () => {
   const isOpening = importPanel.hidden;

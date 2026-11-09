@@ -115,6 +115,10 @@
     .small-note { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 10px 0 0; }
     .theme-toggle { display: flex; width: fit-content; align-items: center; gap: 8px; margin: 0 auto 18px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
     .theme-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--secondary); }
+    .refresh-cache-btn { display: block; width: auto; margin: -8px auto 0; padding: 8px 11px; background: #68756d; font-size: 13px; }
+    .refresh-cache-btn:hover { background: #505b54; }
+    .refresh-cache-btn:disabled { cursor: progress; }
+    .refresh-cache-status { min-height: 0; margin: 6px 0 14px; text-align: center; }
     .import-panel-toggle { width: auto; margin: 4px 0 0; padding: 10px 13px; font-size: 14px; }
     .import-tools { margin: 20px 0; padding-top: 16px; border-top: 1px solid var(--border); }
     .import-tools[hidden] { display: none; }
