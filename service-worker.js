@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v5';
+const CACHE_NAME = 'trac-nghiem-pwa-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -39,6 +39,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request, { cache: 'no-store' });
+        if (response.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, response.clone());
+        }
+        return response;
+      } catch (error) {
+        return await caches.match(event.request)
+          || await caches.match('./index.html')
+          || await caches.match('./');
+      }
+    })());
+    return;
+  }
+
   event.respondWith((async () => {
     const cachedResponse = await caches.match(event.request);
     if (cachedResponse) return cachedResponse;
@@ -55,10 +73,6 @@ self.addEventListener('fetch', (event) => {
       }
       return response;
     } catch (error) {
-      if (event.request.mode === 'navigate') {
-        const fallback = await caches.match('./index.html');
-        if (fallback) return fallback;
-      }
       throw error;
     }
   })());

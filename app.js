@@ -899,9 +899,10 @@ if (readSavedProgress()) {
 if ('serviceWorker' in navigator) {
   const swUrl = new URL('./service-worker.js', window.location.href).href;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(swUrl, { scope: './' })
-      .then(() => {
+    navigator.serviceWorker.register(swUrl, { scope: './', updateViaCache: 'none' })
+      .then((registration) => {
         console.info('Service worker registered for offline quiz support.');
+        registration.update().catch(() => {});
       })
       .catch(() => {
         console.warn('Service worker registration failed. App still works online only.');
