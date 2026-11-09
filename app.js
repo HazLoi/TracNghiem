@@ -897,24 +897,15 @@ if (readSavedProgress()) {
   progressSaveNote.textContent = 'Có bài làm đang lưu trên thiết bị này. Bạn có thể tiếp tục hoặc bắt đầu bài mới.';
 }
 
-async function disablePWAFeatures() {
-  try {
-    const appScope = new URL('./', window.location.href).href;
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations
-        .filter(registration => registration.scope === appScope)
-        .map(registration => registration.unregister()));
-    }
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames
-        .filter(cacheName => cacheName.startsWith('trac-nghiem-pwa-'))
-        .map(cacheName => caches.delete(cacheName)));
-    }
-  } catch (error) {
-    console.warn('Could not disable the previous PWA cache.', error);
-  }
+if ('serviceWorker' in navigator) {
+  const swUrl = new URL('./service-worker.js', window.location.href).href;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(swUrl, { scope: './', updateViaCache: 'none' })
+      .then(registration => {
+        registration.update().catch(() => {});
+      })
+      .catch(error => {
+        console.warn('Service worker registration failed.', error);
+      });
+  });
 }
-
-window.addEventListener('load', disablePWAFeatures);
