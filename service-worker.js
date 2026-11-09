@@ -1,7 +1,9 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v1';
+const CACHE_NAME = 'trac-nghiem-pwa-v2';
 const APP_SHELL = [
   './',
   './index.html',
+  './style.css',
+  './app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -35,23 +37,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          if (response && response.ok) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => cachedResponse || caches.match('./index.html'));
+  event.respondWith((async () => {
+    const cachedResponse = await caches.match(event.request);
+    if (cachedResponse) return cachedResponse;
 
-      return cachedResponse || networkFetch;
-    })
-  );
+    try {
+      const response = await fetch(event.request);
+      if (response.ok) {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, response.clone());
+        } catch (error) {
+          console.warn('Could not cache app resource.', error);
+        }
+      }
+      return response;
+    } catch (error) {
+      if (event.request.mode === 'navigate') {
+        const fallback = await caches.match('./index.html');
+        if (fallback) return fallback;
+      }
+      throw error;
+    }
+  })());
 });
 
 self.addEventListener('message', (event) => {

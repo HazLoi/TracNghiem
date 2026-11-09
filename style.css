@@ -1,0 +1,110 @@
+    :root {
+      --primary: #1b4332;
+      --secondary: #2d6a4f;
+      --bg: #f3f6f4;
+      --text: #212529;
+      --muted: #66736c;
+      --green-bg: #d8f3dc;
+      --green: #1b5e20;
+      --red-bg: #fde2e2;
+      --red: #9b2226;
+      --border: #d9e2dc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 780px;
+      margin: 20px auto;
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #e7ece8;
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.07);
+    }
+    h1 { color: var(--primary); text-align: center; font-size: 22px; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); text-align: center; font-size: 13px; line-height: 1.55; margin: 0 0 22px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 7px; font-weight: 700; font-size: 14px; }
+    select, input[type="number"] {
+      width: 100%; min-height: 46px; padding: 11px 12px;
+      border: 1px solid #cbd5ce; border-radius: 8px; background: #fff;
+      color: var(--text); font-size: 16px;
+    }
+    button {
+      border: 0; border-radius: 8px; padding: 13px 16px;
+      background: var(--secondary); color: white; font-size: 16px;
+      font-weight: 700; cursor: pointer; transition: background .15s, transform .1s;
+    }
+    button:hover { background: var(--primary); }
+    button:active { transform: scale(.99); }
+    button:disabled { cursor: not-allowed; opacity: .65; }
+    .main-btn { width: 100%; margin-top: 6px; }
+    .small-note { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 10px 0 0; }
+    .data-count {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0;
+    }
+    .data-count div { border: 1px solid var(--border); background: #f8fbf9; border-radius: 9px; padding: 10px; text-align: center; font-size: 12px; color: var(--muted); }
+    .data-count strong { display: block; color: var(--primary); font-size: 20px; margin-bottom: 2px; }
+    .quiz-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 9px; }
+    .mode-indicator { color: var(--secondary); text-align: right; }
+    .pause-btn { flex: 0 0 auto; padding: 8px 11px; font-size: 13px; }
+    .pause-modal[hidden] { display: none; }
+    .pause-modal { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 18px; background: rgba(15, 30, 21, .58); }
+    .pause-dialog { width: min(100%, 390px); padding: 22px; border-radius: 14px; background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,.24); }
+    .pause-dialog h2 { margin: 0 0 8px; color: var(--primary); font-size: 20px; text-align: center; }
+    .pause-dialog p { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.5; text-align: center; }
+    .pause-dialog button { width: 100%; margin-top: 9px; }
+    .pause-dialog .exit-quiz-btn { background: #68756d; }
+    .progress-track { height: 8px; background: #e8eee9; border-radius: 20px; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { height: 100%; width: 0; background: var(--secondary); transition: width .2s; }
+    .question-meta { color: var(--secondary); font-size: 12px; font-weight: 800; letter-spacing: .2px; margin-bottom: 7px; }
+    .question-box { font-size: 17px; font-weight: 700; line-height: 1.6; margin: 0 0 17px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .options-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .option-item {
+      width: 100%; text-align: left; display: flex; align-items: flex-start; gap: 11px;
+      background: #f4f7f5; color: var(--text); border: 2px solid transparent;
+      padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 500;
+      line-height: 1.5; margin: 0;
+    }
+    .option-item:hover:not(:disabled) { background: #eaf1ec; border-color: #b7c9bd; }
+    .option-letter { flex: 0 0 27px; width: 27px; height: 27px; border-radius: 50%; background: #e0e9e3; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+    .option-item.correct { background: var(--green-bg); border-color: #55a765; color: var(--green); }
+    .option-item.correct .option-letter { background: #b7e4c7; color: var(--green); }
+    .option-item.incorrect { background: var(--red-bg); border-color: #e07a7a; color: var(--red); }
+    .option-item.incorrect .option-letter { background: #f5baba; color: var(--red); }
+    .option-item:disabled { opacity: 1; }
+    .feedback { display: none; margin-top: 14px; border-radius: 9px; padding: 12px; text-align: center; font-size: 14px; font-weight: 700; line-height: 1.5; }
+    .feedback.correct { display: block; background: var(--green-bg); color: var(--green); }
+    .feedback.incorrect { display: block; background: var(--red-bg); color: var(--red); }
+    #next-btn { display: none; width: 100%; margin-top: 15px; }
+    .stats-card { background: #f0f7f1; border: 1px solid #d7e9da; padding: 18px; border-radius: 12px; margin-bottom: 16px; }
+    .stats-card h2 { margin: 0 0 8px; text-align: center; color: var(--primary); font-size: 17px; }
+    #result-message { margin: 0 0 14px; text-align: center; font-size: 14px; line-height: 1.5; }
+    #retry-section { margin: 16px 0; padding: 14px; border: 1px solid #f1caca; background: #fff8f8; border-radius: 10px; }
+    #retry-section p { margin: 0 0 8px; color: var(--red); font-size: 13px; font-weight: 700; line-height: 1.5; }
+    #retry-wrong-btn { width: 100%; background: #b02a37; }
+    #retry-wrong-btn:hover { background: #842029; }
+    .result-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+    .result-actions button { width: 100%; font-size: 14px; }
+    #restart-btn { background: #68756d; }
+    .storage-note { color: var(--muted); font-size: 12px; text-align: center; line-height: 1.5; margin: 13px 0 0; }
+    .error { display: none; color: var(--red); font-size: 13px; margin-top: 8px; }
+    @media (max-width: 560px) {
+      body { padding: 9px; }
+      .container { margin: 8px auto; padding: 17px 14px; border-radius: 12px; }
+      h1 { font-size: 19px; }
+      .quiz-top { font-size: 12px; flex-wrap: wrap; }
+      .mode-indicator { flex: 1; }
+      .question-box { font-size: 16px; }
+      .option-item { font-size: 14px; padding: 12px 10px; }
+    }
