@@ -16,12 +16,12 @@
 <div class="container">
   <h1>HỆ THỐNG TRẮC NGHIỆM QUÂN Y</h1>
   <p class="subtitle">Chọn bộ câu hỏi, làm bài theo số lượng tùy chọn và ôn lại các câu sai đến khi đúng hết.</p>
+  <label class="theme-toggle" for="theme-toggle">
+    <input id="theme-toggle" type="checkbox">
+    <span>Giao diện tối</span>
+  </label>
 
   <section id="setup-screen" class="screen active">
-    <div class="data-count">
-      <div><strong>1.000</strong>Câu bộ đề Tổ chức chiến thuật quân y</div>
-      <div><strong>256</strong>Câu đề cương ôn tập Quân y</div>
-    </div>
     <div class="form-group">
       <label for="exam-select">Chọn bộ đề:</label>
       <select id="exam-select">
@@ -29,8 +29,8 @@
         <option value="hard">Bộ 2 - Đề cương ôn tập Quân y (256 câu)</option>
       </select>
     </div>
-    <section class="import-tools" aria-labelledby="import-title">
-      <h2 id="import-title">Thêm mã đề từ Excel</h2>
+    <button id="import-toggle" class="import-panel-toggle" type="button" aria-expanded="false" aria-controls="import-panel">Thêm mã đề từ Excel</button>
+    <section id="import-panel" class="import-tools" aria-label="Nhập bộ đề từ Excel" hidden>
       <div class="form-group">
         <label for="excel-file">Chọn file Excel (.xlsx hoặc .xls):</label>
         <div class="excel-file-row">
@@ -72,7 +72,6 @@
     <div id="question-text" class="question-box">Nội dung câu hỏi...</div>
     <ul id="options-list" class="options-list"></ul>
     <div id="feedback-box" class="feedback" aria-live="polite"></div>
-    <button id="next-btn" type="button">Câu tiếp theo</button>
   </section>
 
   <section id="result-screen" class="screen">

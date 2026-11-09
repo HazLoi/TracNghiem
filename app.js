@@ -7,6 +7,7 @@ const PROGRESS_STORAGE_KEY = 'quanYQuizTienDo_v1';
 const CUSTOM_EXAMS_STORAGE_KEY = 'quanYQuizBoDeExcel_v1';
 const CUSTOM_EXAMS_DB_NAME = 'quanYQuizBoDeExcel';
 const CUSTOM_EXAMS_DB_STORE = 'questionSets';
+const THEME_STORAGE_KEY = 'quanYQuizTheme_v1';
 const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const QUESTION_SETS = {
   easy: { count: 1000, file: './questions-easy.json', name: 'Tổ chức chiến thuật quân y - 1.000 câu' },
@@ -38,11 +39,13 @@ const countError = document.getElementById('count-error');
 const startBtn = document.getElementById('start-btn');
 const resumeBtn = document.getElementById('resume-btn');
 const progressSaveNote = document.getElementById('progress-save-note');
+const themeToggle = document.getElementById('theme-toggle');
+const importToggleButton = document.getElementById('import-toggle');
+const importPanel = document.getElementById('import-panel');
 const pauseBtn = document.getElementById('pause-btn');
 const pauseModal = document.getElementById('pause-modal');
 const continueBtn = document.getElementById('continue-btn');
 const exitQuizBtn = document.getElementById('exit-quiz-btn');
-const nextBtn = document.getElementById('next-btn');
 const setupScreen = document.getElementById('setup-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
@@ -64,6 +67,38 @@ const excelExamNameInput = document.getElementById('excel-exam-name');
 const importExamButton = document.getElementById('import-exam-btn');
 const deleteExamButton = document.getElementById('delete-exam-btn');
 const excelImportStatus = document.getElementById('excel-import-status');
+
+function applyTheme(theme, persist = false) {
+  const selectedTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = selectedTheme;
+  themeToggle.checked = selectedTheme === 'dark';
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
+    } catch (error) {
+      console.warn('Could not save the selected color theme.', error);
+    }
+  }
+}
+
+function getInitialTheme() {
+  try {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  } catch (error) {
+    console.warn('Could not read the selected color theme.', error);
+  }
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+applyTheme(getInitialTheme());
+themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'dark' : 'light', true));
+
+importToggleButton.addEventListener('click', () => {
+  const isOpening = importPanel.hidden;
+  importPanel.hidden = !isOpening;
+  importToggleButton.setAttribute('aria-expanded', String(isOpening));
+});
 
 function loadCustomExamCatalog() {
   try {
@@ -481,7 +516,7 @@ function stopAutoAdvance() {
     window.clearTimeout(autoAdvanceTimer);
     autoAdvanceTimer = null;
   }
-  if (currentAnswered) autoAdvanceAt = Date.now() + 2000;
+  if (currentAnswered) autoAdvanceAt = Date.now() + getAutoAdvanceDelay(activeQuestions[currentIndex], selectedSourceLetter);
 }
 
 function openPauseModal() {
@@ -637,7 +672,9 @@ resumeBtn.addEventListener('click', async () => {
   currentAnswered = saved.currentAnswered;
   currentOptionOrder = saved.currentOptionOrder;
   selectedSourceLetter = saved.selectedSourceLetter;
-  autoAdvanceAt = currentAnswered ? Date.now() + 2000 : saved.autoAdvanceAt;
+  autoAdvanceAt = currentAnswered
+    ? Date.now() + getAutoAdvanceDelay(activeQuestions[currentIndex], selectedSourceLetter)
+    : saved.autoAdvanceAt;
   selectedExamName = saved.examName;
   showScreen(quizScreen);
   loadQuestion(true);
@@ -658,9 +695,6 @@ function loadQuestion(resuming = false) {
   }
   feedbackBox.className = 'feedback';
   feedbackBox.textContent = '';
-  nextBtn.style.display = 'none';
-  nextBtn.textContent = currentIndex === activeQuestions.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo';
-
   const q = activeQuestions[currentIndex];
   progressText.textContent = `Câu ${currentIndex + 1} / ${activeQuestions.length}`;
   modeIndicator.textContent = isRetryMode ? `Ôn lại câu sai - vòng ${retryRound} (${activeQuestions.length} câu)` : 'Lần thi đầu tiên';
@@ -707,7 +741,6 @@ function loadQuestion(resuming = false) {
 
 function restoreAnsweredQuestion(question, displayedOptions) {
   const correctOption = displayedOptions.find(option => option.sourceLetter === question.answer);
-  const selectedOption = displayedOptions.find(option => option.sourceLetter === selectedSourceLetter);
   optionsList.querySelectorAll('.option-item').forEach(button => {
     button.disabled = true;
     const sourceLetter = button.dataset.sourceLetter;
@@ -721,8 +754,6 @@ function restoreAnsweredQuestion(question, displayedOptions) {
     ? 'Chính xác! Bạn đã chọn đúng đáp án.'
     : `Chưa chính xác. Đáp án đúng là ${correctOption.letter}. ${correctOption.text}`;
   feedbackBox.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
-  nextBtn.style.display = 'block';
-  nextBtn.textContent = selectedOption ? `Tiếp tục (${Math.max(0, Math.ceil((autoAdvanceAt - Date.now()) / 1000))}s)` : 'Tiếp tục';
   scheduleAutoAdvance();
 }
 
@@ -732,12 +763,16 @@ function scheduleAutoAdvance() {
   autoAdvanceTimer = window.setTimeout(advanceQuestion, delay);
 }
 
+function getAutoAdvanceDelay(question, selectedSource) {
+  return selectedSource === question?.answer ? 1000 : 2000;
+}
+
 function selectOption(selectedSource) {
   if (currentAnswered) return;
   currentAnswered = true;
   selectedSourceLetter = selectedSource;
-  autoAdvanceAt = Date.now() + 2000;
   const question = activeQuestions[currentIndex];
+  autoAdvanceAt = Date.now() + getAutoAdvanceDelay(question, selectedSource);
   const correctOption = question.options.find(option => option.letter === question.answer);
   const buttons = optionsList.querySelectorAll('.option-item');
   buttons.forEach(button => {
@@ -762,20 +797,9 @@ function selectOption(selectedSource) {
     feedbackBox.textContent = `Chưa chính xác. Đáp án đúng là ${QUESTION_LETTERS[displayedCorrectLetter]}. ${correctOption.text}`;
     feedbackBox.className = 'feedback incorrect';
   }
-  nextBtn.style.display = 'block';
-  nextBtn.textContent = `Câu tiếp theo (2s)`;
   saveProgress();
   scheduleAutoAdvance();
 }
-
-nextBtn.addEventListener('click', () => {
-  if (!currentAnswered) return;
-  if (autoAdvanceTimer !== null) {
-    window.clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = null;
-  }
-  advanceQuestion();
-});
 
 function advanceQuestion() {
   if (!currentAnswered) return;
