@@ -33,7 +33,10 @@
       <h2 id="import-title">Thêm mã đề từ Excel</h2>
       <div class="form-group">
         <label for="excel-file">Chọn file Excel (.xlsx hoặc .xls):</label>
-        <input id="excel-file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+        <div class="excel-file-row">
+          <input id="excel-file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+          <a class="template-download" href="./mau-nhap-cau-hoi.xlsx" download="mau-nhap-cau-hoi.xlsx">Tải file mẫu .xlsx</a>
+        </div>
       </div>
       <div id="excel-sheet-group" class="form-group" hidden>
         <label for="excel-sheet">Chọn sheet câu hỏi:</label>
@@ -45,7 +48,7 @@
       </div>
       <button id="import-exam-btn" class="main-btn" type="button" disabled>Thêm bộ đề vào ứng dụng</button>
       <button id="delete-exam-btn" class="main-btn delete-exam-btn" type="button" hidden>Xóa bộ đề Excel đang chọn</button>
-      <p id="excel-import-status" class="small-note" role="status" aria-live="polite">File cần có các cột STT, Tên câu hỏi, Đáp án A-D và Đáp án đúng.</p>
+      <p id="excel-import-status" class="small-note" role="status" aria-live="polite">Điền dữ liệu từ dòng 2, giữ nguyên hàng tiêu đề. Đáp án đúng chỉ ghi A, B, C hoặc D.</p>
     </section>
     <div class="form-group">
       <label for="num-questions">Số câu muốn làm:</label>

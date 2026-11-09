@@ -1,10 +1,11 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v3';
+const CACHE_NAME = 'trac-nghiem-pwa-v4';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './vendor/xlsx.full.min.js',
+  './mau-nhap-cau-hoi.xlsx',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

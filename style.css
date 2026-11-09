@@ -41,6 +41,15 @@
       color: var(--text); font-size: 16px;
     }
     input[type="file"] { padding: 8px; }
+    .excel-file-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+    .excel-file-row input[type="file"] { min-width: 0; }
+    .template-download {
+      min-height: 46px; display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 12px; border-radius: 8px; background: #315b8a; color: #fff;
+      font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap;
+    }
+    .template-download:hover { background: #264a73; }
+    .template-download:focus-visible { outline: 3px solid #8eb6e2; outline-offset: 2px; }
     [hidden] { display: none !important; }
     button {
       border: 0; border-radius: 8px; padding: 13px 16px;
