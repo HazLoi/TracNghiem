@@ -11,7 +11,8 @@ const THEME_STORAGE_KEY = 'quanYQuizTheme_v1';
 const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const QUESTION_SETS = {
   easy: { count: 1000, file: './questions-easy.json', name: 'Tổ chức chiến thuật quân y - 1.000 câu' },
-  hard: { count: 256, file: './questions-hard.json', name: 'Đề cương ôn tập Quân y - 256 câu' }
+  hard: { count: 256, file: './questions-hard.json', name: 'Đề cương ôn tập Quân y - 256 câu' },
+  third: { count: 744, file: './questions-third.json', name: 'Bộ 3 - 744 câu không trùng đề 2' }
 };
 const customExamCatalog = loadCustomExamCatalog();
 const loadedQuestionPools = new Map();
@@ -896,16 +897,24 @@ if (readSavedProgress()) {
   progressSaveNote.textContent = 'Có bài làm đang lưu trên thiết bị này. Bạn có thể tiếp tục hoặc bắt đầu bài mới.';
 }
 
-if ('serviceWorker' in navigator) {
-  const swUrl = new URL('./service-worker.js', window.location.href).href;
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(swUrl, { scope: './', updateViaCache: 'none' })
-      .then((registration) => {
-        console.info('Service worker registered for offline quiz support.');
-        registration.update().catch(() => {});
-      })
-      .catch(() => {
-        console.warn('Service worker registration failed. App still works online only.');
-      });
-  });
+async function disablePWAFeatures() {
+  try {
+    const appScope = new URL('./', window.location.href).href;
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations
+        .filter(registration => registration.scope === appScope)
+        .map(registration => registration.unregister()));
+    }
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames
+        .filter(cacheName => cacheName.startsWith('trac-nghiem-pwa-'))
+        .map(cacheName => caches.delete(cacheName)));
+    }
+  } catch (error) {
+    console.warn('Could not disable the previous PWA cache.', error);
+  }
 }
+
+window.addEventListener('load', disablePWAFeatures);
