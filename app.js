@@ -12,7 +12,12 @@ const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const QUESTION_SETS = {
   easy: { count: 1000, file: './questions-easy.json', name: 'Tổ chức chiến thuật quân y - 1.000 câu' },
   hard: { count: 256, file: './questions-hard.json', name: 'Đề cương ôn tập Quân y - 256 câu' },
-  third: { count: 744, file: './questions-third.json', name: 'Bộ 3 - 744 câu không trùng đề 2' }
+  third: { count: 744, file: './questions-third.json', name: 'Bộ 3 - 744 câu không trùng đề 2' },
+  level1: { count: 200, file: './questions-level-1.json', name: 'Bộ 4 - Cơ bản (200 câu)' },
+  level2: { count: 200, file: './questions-level-2.json', name: 'Bộ 5 - Cơ bản nâng cao (200 câu)' },
+  level3: { count: 200, file: './questions-level-3.json', name: 'Bộ 6 - Trung bình (200 câu)' },
+  level4: { count: 200, file: './questions-level-4.json', name: 'Bộ 7 - Khá (200 câu)' },
+  level5: { count: 200, file: './questions-level-5.json', name: 'Bộ 8 - Nâng cao (200 câu)' }
 };
 const customExamCatalog = loadCustomExamCatalog();
 const loadedQuestionPools = new Map();

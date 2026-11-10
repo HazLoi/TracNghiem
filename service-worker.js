@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v8';
+const CACHE_NAME = 'trac-nghiem-pwa-v9';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,11 @@ const APP_SHELL = [
   './questions-easy.json',
   './questions-hard.json',
   './questions-third.json',
+  './questions-level-1.json',
+  './questions-level-2.json',
+  './questions-level-3.json',
+  './questions-level-4.json',
+  './questions-level-5.json',
   './vendor/xlsx.full.min.js',
   './mau-nhap-cau-hoi.xlsx',
   './manifest.json',

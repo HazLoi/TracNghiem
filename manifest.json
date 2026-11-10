@@ -1,7 +1,7 @@
 {
   "name": "Trắc nghiệm Quân y",
   "short_name": "Quân y",
-  "description": "Trắc nghiệm quân y 1.000 câu và 256 câu hỗ trợ offline trên điện thoại Android.",
+  "description": "Ứng dụng trắc nghiệm quân y nhiều bộ đề, hỗ trợ làm bài offline trên điện thoại Android.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
