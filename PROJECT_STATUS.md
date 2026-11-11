@@ -15,6 +15,9 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 - `questions-third.json`: 744 câu của Bộ 1 sau khi bỏ các bản ghi trùng hoàn toàn với Bộ 2.
 - `questions-level-1.json` … `questions-level-5.json`: năm pool 200 câu, không giao nhau, chia từ toàn bộ Bộ 1 theo mức độ ước lượng.
 - `scripts/generate-level-exams.py`: sinh lại năm pool độ khó, không sửa nguồn.
+- `questions-noi-khoa-level-1.json` … `questions-noi-khoa-level-5.json`: năm pool Nội khoa, mỗi pool 63 câu, phủ đủ 315 câu.
+- `questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json`: năm pool Ngoại khoa, mỗi pool 80 câu, phủ đủ 400 câu.
+- `scripts/generate-subject-exams.py`: đọc DOCX, lấy đáp án từ lựa chọn in đậm, kiểm tra dữ liệu và chia thành năm pool.
 - `service-worker.js`, `manifest.json`, `icons/`: PWA và hoạt động offline.
 - `vendor/xlsx.full.min.js`, `vendor/XLSX-LICENSE.txt`: parser SheetJS nội bộ và giấy phép; không dùng CDN.
 - `mau-nhap-cau-hoi.xlsx`: workbook trống dùng để nhập đề.
@@ -23,7 +26,7 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 
 ## Danh mục bộ đề
 
-`exam-catalog.js` là nguồn chuẩn về môn/nhóm đề và metadata bộ đề. Các bộ hiện có được gắn vào `to-chuc-quan-y`; `noi-khoa` và `ngoai-khoa` đã có danh mục nhưng chưa có dữ liệu đề:
+`exam-catalog.js` là nguồn chuẩn về môn/nhóm đề và metadata bộ đề. Nội khoa và Ngoại khoa mỗi môn có năm mức (Cơ bản, Cơ bản nâng cao, Trung bình, Khá, Nâng cao):
 
 | Khóa | File | Số câu |
 | --- | --- | ---: |
@@ -31,6 +34,8 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 | `hard` | `questions-hard.json` | 256 |
 | `third` | `questions-third.json` | 744 |
 | `level1` … `level5` | `questions-level-1.json` … `questions-level-5.json` | 200 mỗi bộ |
+| `noi1` … `noi5` | `questions-noi-khoa-level-1.json` … `questions-noi-khoa-level-5.json` | 63 mỗi bộ |
+| `ngoai1` … `ngoai5` | `questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json` | 80 mỗi bộ |
 
 Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Khi thêm một môn, thêm category `{ id, name }`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` và đưa file JSON vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
 
@@ -43,6 +48,16 @@ python3 scripts/generate-level-exams.py
 ```
 
 Script yêu cầu đúng 1.000 câu nguồn, STT duy nhất và số lượng chia đều cho 5. Sau khi đổi logic xếp loại, xác minh median rank của từng pool tăng dần và các pool vẫn rời nhau.
+
+Sinh lại mã đề từ bản DOCX nguồn bằng:
+
+```sh
+python3 scripts/generate-subject-exams.py \
+  --internal-docx "/path/to/Đề-cương-nội-khoa.docx" \
+  --surgery-docx "/path/to/Đề-cương-ngoại-khoa.docx"
+```
+
+DOCX nguồn không được lưu trong repository; cần có file nguồn khi chạy lại. Nội dung câu hỏi, đáp án và STT được giữ nguyên. Mức độ được ước lượng bằng các cụm từ về tính toán, tình huống, xử trí/áp dụng, phân tích và độ dài; không phải phân loại chuyên môn được xác nhận. Script yêu cầu số câu chia đều cho năm, số thứ tự liên tục và đúng một phương án in đậm mỗi câu.
 
 ## Schema dữ liệu
 
@@ -81,16 +96,16 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v10`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, cả 8 JSON đề, manifest, icon, parser và file mẫu Excel.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v11`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 18 JSON đề, manifest, icon, parser và file mẫu Excel.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
 
 ## Kiểm tra trước khi hoàn tất
 
-1. `node --check app.js && node --check service-worker.js`.
+1. `node --check app.js && node --check exam-catalog.js && node --check service-worker.js`; parse `scripts/generate-subject-exams.py`.
 2. `python3 -m json.tool manifest.json`.
-3. Kiểm tra số lượng: 1000, 256, 744 và 5 × 200; xác minh schema, STT, đáp án và overlap theo mục tiêu.
+3. Kiểm tra số lượng: 1000, 256, 744, 5 × 200, 5 × 63 và 5 × 80; xác minh schema, STT, đáp án và overlap theo mục tiêu.
 4. Khi thêm đề, thử chọn từng khóa, xác nhận giới hạn, tải JSON và vào được quiz.
 5. Khi đổi worker, kiểm tra APP_SHELL và online/offline fallback; khi đổi nút refresh, kiểm tra staging thành công và thất bại.
 6. `git diff --check`; sau khi push, xem GitHub Pages Actions và xác nhận asset live trước khi nói deploy hoàn tất.
