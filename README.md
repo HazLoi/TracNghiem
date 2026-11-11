@@ -4,6 +4,8 @@
 
 ## Bộ đề
 
+Các bộ đề được nhóm theo môn/nhóm đề và lọc trên giao diện. Hiện các bộ có sẵn thuộc **Tổ chức quân y**; danh mục đã có sẵn nhóm **Nội khoa** và **Ngoại khoa** để bổ sung khi có dữ liệu, chưa tạo bộ đề trống.
+
 | Mã | Nội dung | Số câu |
 | --- | --- | ---: |
 | Bộ 1 | Tổ chức chiến thuật quân y, nguồn Word | 1.000 |
@@ -42,18 +44,21 @@ Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột
 ## Kiến trúc
 
 - `index.html`, `style.css`, `app.js`: giao diện và logic quiz.
-- `questions-*.json`: dữ liệu đề tĩnh; `QUESTION_SETS` trong `app.js` là danh mục dùng để tải và giới hạn số câu.
+- `exam-catalog.js`: danh mục môn/nhóm đề và metadata các bộ đề. Thêm bộ đề tĩnh mới bằng cách thêm metadata ở đây và đưa JSON tương ứng vào app shell.
+- `questions-*.json`: dữ liệu đề tĩnh.
 - `service-worker.js`, `manifest.json`: cài đặt PWA, precache app/dữ liệu và làm mới cache.
 - `vendor/xlsx.full.min.js`: SheetJS nội bộ để đọc Excel offline.
 - `PROJECT_STATUS.md`: hướng dẫn chi tiết cho AI/dev tiếp tục làm việc trong repo.
 
-Khi thêm hoặc đổi bộ đề, cần đồng bộ danh mục trong `app.js`, lựa chọn trong `index.html`, danh sách `APP_SHELL` và `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`.
+Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, thêm file JSON vào `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
+
+Đề nhập từ Excel có thể gắn vào một môn/nhóm đề và vẫn chỉ được lưu trên thiết bị đang nhập.
 
 ## Chạy và kiểm tra
 
 Chạy website bằng server tĩnh, ví dụ `python3 -m http.server 8000`, rồi mở `http://localhost:8000/`. Service worker cần HTTPS hoặc localhost.
 
-Kiểm tra JavaScript: `node --check app.js && node --check service-worker.js`.
+Kiểm tra JavaScript: `node --check app.js && node --check exam-catalog.js && node --check service-worker.js`.
 
 Kiểm tra JSON: `python3 -m json.tool manifest.json` và đọc các file `questions-*.json` bằng Python; các bộ phải có đúng số câu trong bảng.
 

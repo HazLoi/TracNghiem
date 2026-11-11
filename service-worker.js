@@ -1,8 +1,9 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v9';
+const CACHE_NAME = 'trac-nghiem-pwa-v10';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
+  './exam-catalog.js',
   './app.js',
   './questions-easy.json',
   './questions-hard.json',

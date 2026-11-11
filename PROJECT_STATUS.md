@@ -6,9 +6,10 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 
 ## Cấu trúc và trách nhiệm
 
-- `index.html`: các màn hình cấu hình, quiz, kết quả; danh sách bộ đề và điều khiển theme/import/cache.
+- `index.html`: các màn hình cấu hình, quiz, kết quả; bộ lọc môn/nhóm đề và điều khiển theme/import/cache.
 - `style.css`: giao diện sáng/tối, responsive và trạng thái quiz.
-- `app.js`: tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel và đăng ký service worker.
+- `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel và đăng ký service worker.
+- `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
 - `questions-easy.json`: dữ liệu nguồn 1.000 câu.
 - `questions-hard.json`: dữ liệu nguồn PDF 256 câu.
 - `questions-third.json`: 744 câu của Bộ 1 sau khi bỏ các bản ghi trùng hoàn toàn với Bộ 2.
@@ -22,7 +23,7 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 
 ## Danh mục bộ đề
 
-`QUESTION_SETS` trong `app.js` là nguồn chuẩn về khóa, số câu, đường dẫn và tên hiển thị:
+`exam-catalog.js` là nguồn chuẩn về môn/nhóm đề và metadata bộ đề. Các bộ hiện có được gắn vào `to-chuc-quan-y`; `noi-khoa` và `ngoai-khoa` đã có danh mục nhưng chưa có dữ liệu đề:
 
 | Khóa | File | Số câu |
 | --- | --- | ---: |
@@ -30,6 +31,8 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 | `hard` | `questions-hard.json` | 256 |
 | `third` | `questions-third.json` | 744 |
 | `level1` … `level5` | `questions-level-1.json` … `questions-level-5.json` | 200 mỗi bộ |
+
+Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Khi thêm một môn, thêm category `{ id, name }`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` và đưa file JSON vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
 
 Bộ 4–8 hiển thị lần lượt là Cơ bản, Cơ bản nâng cao, Trung bình, Khá, Nâng cao. Nhãn này là ước lượng, không phải metadata từ Word/PDF. Bộ 1 được xếp ổn định theo điểm nhận thức (tính toán, tình huống, áp dụng, phân tích/phủ định), sau đó theo độ dài câu hỏi/lựa chọn và STT. Mỗi pool giữ nguyên bản ghi, STT, đáp án; năm pool chia đủ 1.000 STT, không chồng lặp.
 
@@ -65,7 +68,7 @@ Script yêu cầu đúng 1.000 câu nguồn, STT duy nhất và số lượng ch
 - Thứ tự lựa chọn bị xáo trộn khi hiển thị; `data-source-letter` giữ liên kết tới đáp án gốc.
 - Đúng tự chuyển sau 1 giây, sai sau 2 giây; sai có thể ôn lại cho tới khi đúng.
 - Tạm dừng/đổi tab lưu trạng thái và có thể khôi phục bài.
-- `localStorage`: `quanYQuizTienDo_v1` (tiến độ), `quanYQuizBoDeExcel_v1` (danh mục đề nhập), `quanYQuizTheme_v1` (theme).
+- `localStorage`: `quanYQuizTienDo_v1` (tiến độ), `quanYQuizBoDeExcel_v1` (danh mục đề nhập và category), `quanYQuizTheme_v1` (theme).
 - `IndexedDB`: database `quanYQuizBoDeExcel`, object store `questionSets`, lưu câu hỏi của đề Excel theo thiết bị.
 - Xóa đề Excel xóa bản ghi IndexedDB và mục danh mục tương ứng; không xóa nguồn JSON.
 
@@ -78,7 +81,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v9`; `APP_SHELL` phải gồm HTML/CSS/JS, cả 8 JSON đề, manifest, icon, parser và file mẫu Excel.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v10`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, cả 8 JSON đề, manifest, icon, parser và file mẫu Excel.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
@@ -95,6 +98,6 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## Quy tắc thay đổi
 
 - Giữ nguyên `questions-easy.json` và `questions-hard.json` trừ khi có yêu cầu sửa nội dung nguồn.
-- Thêm bộ built-in phải cập nhật `QUESTION_SETS`, `<select id="exam-select">`, JSON tương ứng và `APP_SHELL`.
+- Thêm bộ built-in phải cập nhật `exam-catalog.js`, JSON tương ứng và `APP_SHELL`; giao diện lọc và lựa chọn được sinh từ catalog.
 - Cập nhật `README.md` và file này sau mỗi tính năng; ghi rõ giả định/heuristic và kiểm tra đã chạy.
 - Không xóa dữ liệu localStorage/IndexedDB trong thao tác cache refresh.
