@@ -6,22 +6,21 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 
 ## Cấu trúc và trách nhiệm
 
+- `data/questions/<môn>/`: toàn bộ ngân hàng JSON; mỗi môn có thư mục riêng.
+- `data/templates/`: file Excel mẫu và workbook mẫu.
 - `index.html`: các màn hình cấu hình, quiz, kết quả; bộ lọc môn/nhóm đề và điều khiển theme/import/cache.
 - `style.css`: giao diện sáng/tối, responsive và trạng thái quiz.
 - `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel và đăng ký service worker.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
-- `questions-easy.json`: dữ liệu nguồn 1.000 câu.
-- `questions-hard.json`: dữ liệu nguồn PDF 256 câu.
-- `questions-third.json`: 744 câu của Bộ 1 sau khi bỏ các bản ghi trùng hoàn toàn với Bộ 2.
-- `questions-level-1.json` … `questions-level-5.json`: năm pool 200 câu, không giao nhau, chia từ toàn bộ Bộ 1 theo mức độ ước lượng.
+- `data/questions/to-chuc-quan-y/`: dữ liệu nguồn 1.000/256 câu và các tập con 744/5 × 200 câu.
 - `scripts/generate-level-exams.py`: sinh lại năm pool độ khó, không sửa nguồn.
-- `questions-noi-khoa-level-1.json` … `questions-noi-khoa-level-5.json`: năm pool Nội khoa, mỗi pool 63 câu, phủ đủ 315 câu.
-- `questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json`: năm pool Ngoại khoa, mỗi pool 80 câu, phủ đủ 400 câu.
+- `data/questions/noi-khoa/`: năm pool Nội khoa, mỗi pool 63 câu, phủ đủ 315 câu.
+- `data/questions/ngoai-khoa/`: năm pool Ngoại khoa, mỗi pool 80 câu, phủ đủ 400 câu.
 - `scripts/generate-subject-exams.py`: đọc DOCX, lấy đáp án từ lựa chọn in đậm, kiểm tra dữ liệu và chia thành năm pool.
 - `service-worker.js`, `manifest.json`, `icons/`: PWA và hoạt động offline.
 - `vendor/xlsx.full.min.js`, `vendor/XLSX-LICENSE.txt`: parser SheetJS nội bộ và giấy phép; không dùng CDN.
-- `mau-nhap-cau-hoi.xlsx`: workbook trống dùng để nhập đề.
-- `bo-de-trac-nghiem-mau.xlsx`: workbook chứa hai bộ dữ liệu đã chuẩn hóa và sheet mẫu.
+- `data/templates/mau-nhap-cau-hoi.xlsx`: workbook trống dùng để nhập đề.
+- `data/templates/bo-de-trac-nghiem-mau.xlsx`: workbook chứa hai bộ dữ liệu đã chuẩn hóa và sheet mẫu.
 - `README.md`: hướng dẫn tổng quan; luôn cập nhật cùng file này sau mỗi tính năng.
 
 ## Danh mục bộ đề
@@ -30,14 +29,14 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 
 | Khóa | File | Số câu |
 | --- | --- | ---: |
-| `easy` | `questions-easy.json` | 1.000 |
-| `hard` | `questions-hard.json` | 256 |
-| `third` | `questions-third.json` | 744 |
-| `level1` … `level5` | `questions-level-1.json` … `questions-level-5.json` | 200 mỗi bộ |
-| `noi1` … `noi5` | `questions-noi-khoa-level-1.json` … `questions-noi-khoa-level-5.json` | 63 mỗi bộ |
-| `ngoai1` … `ngoai5` | `questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json` | 80 mỗi bộ |
+| `easy` | `data/questions/to-chuc-quan-y/questions-easy.json` | 1.000 |
+| `hard` | `data/questions/to-chuc-quan-y/questions-hard.json` | 256 |
+| `third` | `data/questions/to-chuc-quan-y/questions-third.json` | 744 |
+| `level1` … `level5` | `data/questions/to-chuc-quan-y/questions-level-1.json` … `questions-level-5.json` | 200 mỗi bộ |
+| `noi1` … `noi5` | `data/questions/noi-khoa/questions-noi-khoa-level-1.json` … `questions-noi-khoa-level-5.json` | 63 mỗi bộ |
+| `ngoai1` … `ngoai5` | `data/questions/ngoai-khoa/questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json` | 80 mỗi bộ |
 
-Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Khi thêm một môn, thêm category `{ id, name }`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` và đưa file JSON vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
+Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Khi thêm một môn, thêm category `{ id, name }` và thư mục `data/questions/<categoryId>/`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` trỏ đến JSON trong thư mục môn và đưa đường dẫn đó vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
 
 Bộ 4–8 hiển thị lần lượt là Cơ bản, Cơ bản nâng cao, Trung bình, Khá, Nâng cao. Nhãn này là ước lượng, không phải metadata từ Word/PDF. Bộ 1 được xếp ổn định theo điểm nhận thức (tính toán, tình huống, áp dụng, phân tích/phủ định), sau đó theo độ dài câu hỏi/lựa chọn và STT. Mỗi pool giữ nguyên bản ghi, STT, đáp án; năm pool chia đủ 1.000 STT, không chồng lặp.
 
@@ -96,7 +95,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v11`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 18 JSON đề, manifest, icon, parser và file mẫu Excel.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v12`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 18 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
@@ -112,7 +111,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 
 ## Quy tắc thay đổi
 
-- Giữ nguyên `questions-easy.json` và `questions-hard.json` trừ khi có yêu cầu sửa nội dung nguồn.
+- Giữ nguyên nội dung nguồn `data/questions/to-chuc-quan-y/questions-easy.json` và `questions-hard.json` trừ khi có yêu cầu sửa dữ liệu.
 - Thêm bộ built-in phải cập nhật `exam-catalog.js`, JSON tương ứng và `APP_SHELL`; giao diện lọc và lựa chọn được sinh từ catalog.
 - Cập nhật `README.md` và file này sau mỗi tính năng; ghi rõ giả định/heuristic và kiểm tra đã chạy.
 - Không xóa dữ liệu localStorage/IndexedDB trong thao tác cache refresh.

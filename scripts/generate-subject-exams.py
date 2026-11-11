@@ -147,7 +147,9 @@ def write_level_files(subject_id, questions, output_dir):
     for level in range(LEVEL_COUNT):
         start = level * questions_per_level
         end = start + questions_per_level
-        output_path = output_dir / f'questions-{subject_id}-level-{level + 1}.json'
+        subject_dir = output_dir / subject_id
+        subject_dir.mkdir(parents=True, exist_ok=True)
+        output_path = subject_dir / f'questions-{subject_id}-level-{level + 1}.json'
         output_path.write_text(
             json.dumps(ranked_questions[start:end], ensure_ascii=False, separators=(',', ':')) + '\n',
             encoding='utf-8'
@@ -161,7 +163,12 @@ def main():
     )
     parser.add_argument('--internal-docx', required=True, type=Path, help='Internal medicine DOCX source.')
     parser.add_argument('--surgery-docx', required=True, type=Path, help='Surgery DOCX source.')
-    parser.add_argument('--output-dir', type=Path, default=ROOT, help='Directory for generated JSON files.')
+    parser.add_argument(
+        '--output-dir',
+        type=Path,
+        default=ROOT / 'data' / 'questions',
+        help='Base directory for subject folders and generated JSON files.'
+    )
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 

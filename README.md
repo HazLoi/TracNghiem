@@ -41,7 +41,7 @@ Các file `questions-*.json` dùng schema:
 }
 ```
 
-Không đánh lại STT gốc. Tạo lại năm mức bằng lệnh `python3 scripts/generate-level-exams.py`; script chỉ đọc `questions-easy.json` và ghi `questions-level-1.json` đến `questions-level-5.json`.
+Không đánh lại STT gốc. Tạo lại năm mức bằng lệnh `python3 scripts/generate-level-exams.py`; script chỉ đọc dữ liệu nguồn trong `data/questions/to-chuc-quan-y/` và ghi năm pool vào cùng thư mục.
 
 Tạo lại mã đề Nội khoa/Ngoại khoa từ hai file DOCX (cần cung cấp đường dẫn file nguồn):
 
@@ -59,13 +59,23 @@ Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột
 
 - `index.html`, `style.css`, `app.js`: giao diện và logic quiz.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata các bộ đề. Thêm bộ đề tĩnh mới bằng cách thêm metadata ở đây và đưa JSON tương ứng vào app shell.
-- `questions-*.json`: dữ liệu đề tĩnh.
+- `data/questions/`: ngân hàng JSON, chia theo môn để tránh dồn file ở thư mục gốc.
+- `data/templates/`: workbook mẫu và workbook dữ liệu Excel.
 - `scripts/generate-subject-exams.py`: kiểm tra DOCX và sinh năm mã đề cho từng môn Nội khoa/Ngoại khoa.
 - `service-worker.js`, `manifest.json`: cài đặt PWA, precache app/dữ liệu và làm mới cache.
 - `vendor/xlsx.full.min.js`: SheetJS nội bộ để đọc Excel offline.
 - `PROJECT_STATUS.md`: hướng dẫn chi tiết cho AI/dev tiếp tục làm việc trong repo.
 
-Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, thêm file JSON vào `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
+```text
+data/
+├── questions/
+│   ├── to-chuc-quan-y/
+│   ├── noi-khoa/
+│   └── ngoai-khoa/
+└── templates/
+```
+
+Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js` và tạo thư mục tương ứng dưới `data/questions/`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, đưa JSON vào thư mục môn và `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
 
 Đề nhập từ Excel có thể gắn vào một môn/nhóm đề và vẫn chỉ được lưu trên thiết bị đang nhập.
 
@@ -75,7 +85,7 @@ Chạy website bằng server tĩnh, ví dụ `python3 -m http.server 8000`, rồ
 
 Kiểm tra JavaScript: `node --check app.js && node --check exam-catalog.js && node --check service-worker.js`.
 
-Kiểm tra JSON: `python3 -m json.tool manifest.json` và đọc các file `questions-*.json` bằng Python; các bộ phải có đúng số câu trong bảng.
+Kiểm tra JSON: `python3 -m json.tool manifest.json` và đọc toàn bộ file JSON dưới `data/questions/`; các bộ phải có đúng số câu trong bảng.
 
 ## Quy ước tiến độ
 

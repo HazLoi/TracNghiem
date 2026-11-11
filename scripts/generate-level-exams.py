@@ -4,7 +4,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_PATH = ROOT / 'questions-easy.json'
+QUESTION_DIR = ROOT / 'data' / 'questions' / 'to-chuc-quan-y'
+SOURCE_PATH = QUESTION_DIR / 'questions-easy.json'
 EXPECTED_QUESTIONS = 1000
 LEVEL_COUNT = 5
 
@@ -60,7 +61,7 @@ def main():
     for level in range(LEVEL_COUNT):
         start = level * questions_per_level
         end = start + questions_per_level
-        output_path = ROOT / f'questions-level-{level + 1}.json'
+        output_path = QUESTION_DIR / f'questions-level-{level + 1}.json'
         output_path.write_text(
             json.dumps(ranked_questions[start:end], ensure_ascii=False, separators=(',', ':')) + '\n',
             encoding='utf-8'
