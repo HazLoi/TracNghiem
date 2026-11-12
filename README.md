@@ -17,7 +17,9 @@ Các bộ đề được nhóm theo môn/nhóm đề và lọc trên giao diện
 | Bộ 7 | Khá, phân loại ước lượng | 200 |
 | Bộ 8 | Nâng cao, phân loại ước lượng | 200 |
 | Nội khoa - Mức 1–5 | Cơ bản đến Nâng cao | 63 mỗi mã đề (315 tổng) |
+| Nội khoa - Toàn bộ | Gộp đủ các mức 1–5 | 315 |
 | Ngoại khoa - Mức 1–5 | Cơ bản đến Nâng cao | 80 mỗi mã đề (400 tổng) |
+| Ngoại khoa - Toàn bộ | Gộp đủ các mức 1–5 | 400 |
 
 Năm bộ 4–8 là các phần rời nhau, cùng lấy từ Bộ 1 và phủ đủ 1.000 câu. Độ khó được ước lượng tự động từ dạng câu hỏi (tính toán, tình huống, áp dụng, phân tích), độ dài câu và lựa chọn; tài liệu nguồn không có nhãn độ khó chính thức.
 
@@ -43,7 +45,7 @@ Các file `questions-*.json` dùng schema:
 
 Không đánh lại STT gốc. Tạo lại năm mức bằng lệnh `python3 scripts/generate-level-exams.py`; script chỉ đọc dữ liệu nguồn trong `data/questions/to-chuc-quan-y/` và ghi năm pool vào cùng thư mục.
 
-Tạo lại mã đề Nội khoa/Ngoại khoa từ hai file DOCX (cần cung cấp đường dẫn file nguồn):
+Tạo lại mã đề Nội khoa/Ngoại khoa (các mức và mã đề Toàn bộ) từ hai file DOCX (cần cung cấp đường dẫn file nguồn):
 
 ```sh
 python3 scripts/generate-subject-exams.py \
@@ -51,7 +53,7 @@ python3 scripts/generate-subject-exams.py \
   --surgery-docx "/path/to/Đề-cương-ngoại-khoa.docx"
 ```
 
-Mỗi nguồn phải có số câu chia hết cho năm, đánh số liên tục từ 1, có đúng bốn lựa chọn A–D theo thứ tự và đánh dấu chính xác một đáp án bằng chữ đậm.
+Mỗi nguồn phải có số câu chia hết cho năm, đánh số liên tục từ 1, có đúng bốn lựa chọn A–D theo thứ tự và đánh dấu chính xác một đáp án bằng chữ đậm. Script tạo thêm file `questions-<môn>-all.json` giữ đủ câu theo thứ tự STT.
 
 Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột `STT`, `Tên câu hỏi`, `Đáp án A`, `Đáp án B`, `Đáp án C`, `Đáp án D`, `Đáp án đúng`. File và dữ liệu câu hỏi nhập được lưu cục bộ trên thiết bị, không tải lên server.
 
@@ -61,7 +63,7 @@ Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata các bộ đề. Thêm bộ đề tĩnh mới bằng cách thêm metadata ở đây và đưa JSON tương ứng vào app shell.
 - `data/questions/`: ngân hàng JSON, chia theo môn để tránh dồn file ở thư mục gốc.
 - `data/templates/`: workbook mẫu và workbook dữ liệu Excel.
-- `scripts/generate-subject-exams.py`: kiểm tra DOCX và sinh năm mã đề cho từng môn Nội khoa/Ngoại khoa.
+- `scripts/generate-subject-exams.py`: kiểm tra DOCX và sinh năm mức cùng mã đề Toàn bộ cho mỗi môn Nội khoa/Ngoại khoa.
 - `service-worker.js`, `manifest.json`: cài đặt PWA, precache app/dữ liệu và làm mới cache.
 - `vendor/xlsx.full.min.js`: SheetJS nội bộ để đọc Excel offline.
 - `PROJECT_STATUS.md`: hướng dẫn chi tiết cho AI/dev tiếp tục làm việc trong repo.
@@ -74,6 +76,8 @@ data/
 │   └── ngoai-khoa/
 └── templates/
 ```
+
+Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Danh sách mã đề không lặp số lượng câu trong tên option. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ.
 
 Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js` và tạo thư mục tương ứng dưới `data/questions/`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, đưa JSON vào thư mục môn và `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
 

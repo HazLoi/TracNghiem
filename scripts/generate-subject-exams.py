@@ -142,13 +142,20 @@ def write_level_files(subject_id, questions, output_dir):
             f'into {LEVEL_COUNT} levels.'
         )
 
+    subject_dir = output_dir / subject_id
+    subject_dir.mkdir(parents=True, exist_ok=True)
+    all_questions_path = subject_dir / f'questions-{subject_id}-all.json'
+    all_questions_path.write_text(
+        json.dumps(questions, ensure_ascii=False, separators=(',', ':')) + '\n',
+        encoding='utf-8'
+    )
+    print(f'{all_questions_path.name}: {len(questions)} questions (all levels)')
+
     ranked_questions = sorted(questions, key=difficulty_key)
     questions_per_level = len(ranked_questions) // LEVEL_COUNT
     for level in range(LEVEL_COUNT):
         start = level * questions_per_level
         end = start + questions_per_level
-        subject_dir = output_dir / subject_id
-        subject_dir.mkdir(parents=True, exist_ok=True)
         output_path = subject_dir / f'questions-{subject_id}-level-{level + 1}.json'
         output_path.write_text(
             json.dumps(ranked_questions[start:end], ensure_ascii=False, separators=(',', ':')) + '\n',

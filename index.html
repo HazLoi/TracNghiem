@@ -60,6 +60,7 @@
     <div class="form-group">
       <label for="num-questions">Số câu muốn làm:</label>
       <input type="number" id="num-questions" value="20" min="1" max="1000" inputmode="numeric">
+      <p class="small-note">Khi chọn mã đề, số câu tự điền bằng tổng số câu của mã đó; bạn có thể giảm xuống nếu muốn làm ít hơn.</p>
       <div id="count-error" class="error"></div>
     </div>
     <button id="start-btn" class="main-btn" type="button">Bắt đầu làm bài</button>
@@ -71,6 +72,7 @@
   <section id="quiz-screen" class="screen">
     <div class="quiz-top">
       <span id="progress-text">Câu 1 / 20</span>
+      <span id="wrong-count" class="wrong-count" aria-live="polite">Số câu đã sai: 0</span>
       <span id="mode-indicator" class="mode-indicator">Lần thi đầu tiên</span>
       <button id="pause-btn" class="pause-btn" type="button">Tạm dừng</button>
     </div>

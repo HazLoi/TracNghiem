@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v12';
+const CACHE_NAME = 'trac-nghiem-pwa-v13';
 const APP_SHELL = [
   './',
   './index.html',
@@ -18,11 +18,13 @@ const APP_SHELL = [
   './data/questions/noi-khoa/questions-noi-khoa-level-3.json',
   './data/questions/noi-khoa/questions-noi-khoa-level-4.json',
   './data/questions/noi-khoa/questions-noi-khoa-level-5.json',
+  './data/questions/noi-khoa/questions-noi-khoa-all.json',
   './data/questions/ngoai-khoa/questions-ngoai-khoa-level-1.json',
   './data/questions/ngoai-khoa/questions-ngoai-khoa-level-2.json',
   './data/questions/ngoai-khoa/questions-ngoai-khoa-level-3.json',
   './data/questions/ngoai-khoa/questions-ngoai-khoa-level-4.json',
   './data/questions/ngoai-khoa/questions-ngoai-khoa-level-5.json',
+  './data/questions/ngoai-khoa/questions-ngoai-khoa-all.json',
   './vendor/xlsx.full.min.js',
   './data/templates/mau-nhap-cau-hoi.xlsx',
   './manifest.json',

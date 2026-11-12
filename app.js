@@ -19,6 +19,7 @@ let activeQuestions = [];
 let sessionQuestions = [];
 let wrongQuestions = [];
 let nextWrongQuestions = [];
+let wrongQuestionStts = new Set();
 let currentIndex = 0;
 let firstAttemptResults = {};
 let isRetryMode = false;
@@ -52,6 +53,7 @@ const setupScreen = document.getElementById('setup-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
 const progressText = document.getElementById('progress-text');
+const wrongCount = document.getElementById('wrong-count');
 const modeIndicator = document.getElementById('mode-indicator');
 const progressFill = document.getElementById('progress-fill');
 const questionMeta = document.getElementById('question-meta');
@@ -262,14 +264,16 @@ function updateQuestionLimit() {
   startBtn.disabled = false;
   const max = selectedSet.count;
   numQuestionsInput.max = String(max);
-  const current = Number.parseInt(numQuestionsInput.value, 10);
-  if (!Number.isFinite(current) || current < 1) numQuestionsInput.value = '20';
-  else if (current > max) numQuestionsInput.value = String(max);
+  numQuestionsInput.value = String(max);
   countError.style.display = 'none';
   countError.textContent = '';
   deleteExamButton.hidden = !customExamCatalog.some(item => item.id === examSelect.value);
 }
 examSelect.addEventListener('change', updateQuestionLimit);
+
+function updateWrongCount() {
+  wrongCount.textContent = `Số câu đã sai: ${wrongQuestionStts.size}`;
+}
 
 function renderCategoryOptions(selectedCategoryId = subjectFilter.value || DEFAULT_CATEGORY_ID) {
   subjectFilter.replaceChildren(...EXAM_CATEGORIES.map(category => {
@@ -301,7 +305,7 @@ function renderExamOptions(selectedId = examSelect.value) {
     exams.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = `${item.name} (${item.count} câu)`;
+      option.textContent = item.name;
       examSelect.appendChild(option);
     });
     examSelect.value = exams.some(item => item.id === selectedId) ? selectedId : exams[0].id;
@@ -524,6 +528,7 @@ startBtn.addEventListener('click', async () => {
     activeQuestions = sessionQuestions.slice();
     wrongQuestions = [];
     nextWrongQuestions = [];
+    wrongQuestionStts = new Set();
     firstAttemptResults = {};
     currentIndex = 0;
     retryRound = 0;
@@ -570,6 +575,7 @@ function saveProgress() {
     activeQuestionStts: activeQuestions.map(question => question.stt),
     wrongQuestionStts: wrongQuestions.map(question => question.stt),
     nextWrongQuestionStts: nextWrongQuestions.map(question => question.stt),
+    answeredWrongQuestionStts: [...wrongQuestionStts],
     firstAttemptResults,
     currentIndex,
     retryRound,
@@ -690,6 +696,18 @@ async function loadSavedProgress() {
   const restoredActive = restoreQuestions(saved.activeQuestionStts);
   const restoredWrong = restoreQuestions(saved.wrongQuestionStts);
   const restoredNextWrong = restoreQuestions(saved.nextWrongQuestionStts);
+  const previousWrongStts = [
+    ...(Array.isArray(saved.wrongQuestionStts) ? saved.wrongQuestionStts : []),
+    ...(Array.isArray(saved.nextWrongQuestionStts) ? saved.nextWrongQuestionStts : [])
+  ];
+  const answeredWrongStts = Array.isArray(saved.answeredWrongQuestionStts)
+    ? saved.answeredWrongQuestionStts
+    : [
+      ...previousWrongStts,
+      ...Object.entries(saved.firstAttemptResults || {})
+        .filter(([, isCorrect]) => isCorrect === false)
+        .map(([stt]) => Number(stt))
+    ];
   const valid = (questions, expectedLength) => questions
     && questions.length === expectedLength
     && questions.every(Boolean);
@@ -698,6 +716,8 @@ async function loadSavedProgress() {
     || !valid(restoredActive, saved.activeQuestionStts?.length)
     || !valid(restoredWrong, saved.wrongQuestionStts?.length)
     || !valid(restoredNextWrong, saved.nextWrongQuestionStts?.length)
+    || !Array.isArray(answeredWrongStts)
+    || answeredWrongStts.some(stt => !Number.isInteger(stt) || !questionIndexes.get(saved.examKey).has(stt))
     || restoredActive.length === 0
     || !Number.isInteger(saved.currentIndex)
     || saved.currentIndex < 0
@@ -722,6 +742,7 @@ async function loadSavedProgress() {
     activeQuestions: restoredActive,
     wrongQuestions: restoredWrong,
     nextWrongQuestions: restoredNextWrong,
+    answeredWrongQuestionStts: [...new Set(answeredWrongStts)],
     examName: getExamSet(saved.examKey).name
   };
 }
@@ -743,6 +764,8 @@ resumeBtn.addEventListener('click', async () => {
   activeQuestions = saved.activeQuestions;
   wrongQuestions = saved.wrongQuestions;
   nextWrongQuestions = saved.nextWrongQuestions;
+  wrongQuestionStts = new Set(saved.answeredWrongQuestionStts);
+  updateWrongCount();
   firstAttemptResults = saved.firstAttemptResults || {};
   currentIndex = saved.currentIndex;
   retryRound = saved.retryRound;
@@ -774,6 +797,7 @@ function loadQuestion(resuming = false) {
   feedbackBox.className = 'feedback';
   feedbackBox.textContent = '';
   const q = activeQuestions[currentIndex];
+  updateWrongCount();
   progressText.textContent = `Câu ${currentIndex + 1} / ${activeQuestions.length}`;
   modeIndicator.textContent = isRetryMode ? `Ôn lại câu sai - vòng ${retryRound} (${activeQuestions.length} câu)` : 'Lần thi đầu tiên';
   progressFill.style.width = `${((currentIndex + 1) / activeQuestions.length) * 100}%`;
@@ -860,6 +884,8 @@ function selectOption(selectedSource) {
 
   const isCorrect = selectedSource === question.answer;
   if (!isCorrect) {
+    wrongQuestionStts.add(question.stt);
+    updateWrongCount();
     optionsList.querySelector(`[data-source-letter="${selectedSource}"]`)?.classList.add('incorrect');
   }
 
