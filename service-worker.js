@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trac-nghiem-pwa-v13';
+const CACHE_NAME = 'trac-nghiem-pwa-v14';
 const APP_SHELL = [
   './',
   './index.html',

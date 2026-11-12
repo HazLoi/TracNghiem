@@ -77,7 +77,7 @@ data/
 └── templates/
 ```
 
-Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Danh sách mã đề không lặp số lượng câu trong tên option. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ.
+Option mã đề hiển thị tên và tổng số câu, ví dụ `Nội khoa - Toàn bộ câu hỏi (315 câu)`. Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ.
 
 Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js` và tạo thư mục tương ứng dưới `data/questions/`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, đưa JSON vào thư mục môn và `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
 

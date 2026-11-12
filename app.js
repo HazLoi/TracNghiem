@@ -305,7 +305,7 @@ function renderExamOptions(selectedId = examSelect.value) {
     exams.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = item.name;
+      option.textContent = `${item.name} (${item.count.toLocaleString('vi-VN')} câu)`;
       examSelect.appendChild(option);
     });
     examSelect.value = exams.some(item => item.id === selectedId) ? selectedId : exams[0].id;

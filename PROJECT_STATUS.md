@@ -39,7 +39,7 @@ Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Tri�
 | `ngoai1` … `ngoai5` | `data/questions/ngoai-khoa/questions-ngoai-khoa-level-1.json` … `questions-ngoai-khoa-level-5.json` | 80 mỗi bộ |
 | `ngoai-all` | `data/questions/ngoai-khoa/questions-ngoai-khoa-all.json` | 400 |
 
-Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Tên option chỉ hiển thị `name`, không tự nối số lượng câu. Khi chọn mã đề, input số câu tự đặt thành `count`; người dùng vẫn được phép giảm số câu. Khi thêm một môn, thêm category `{ id, name }` và thư mục `data/questions/<categoryId>/`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` trỏ đến JSON trong thư mục môn và đưa đường dẫn đó vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
+Giao diện tự tạo bộ lọc và lựa chọn bộ đề từ catalog. Tên option hiển thị `name` cùng tổng số câu, định dạng `(<count> câu)`. Khi chọn mã đề, input số câu tự đặt thành `count`; người dùng vẫn được phép giảm số câu. Khi thêm một môn, thêm category `{ id, name }` và thư mục `data/questions/<categoryId>/`. Khi thêm đề, thêm metadata `{ id, categoryId, count, file, name }` trỏ đến JSON trong thư mục môn và đưa đường dẫn đó vào `APP_SHELL`. Không thêm option thủ công trong HTML. Đề Excel lưu thêm `categoryId`; các bản ghi localStorage cũ không có trường này được gán mặc định vào `to-chuc-quan-y`.
 
 Bộ 4–8 hiển thị lần lượt là Cơ bản, Cơ bản nâng cao, Trung bình, Khá, Nâng cao. Nhãn này là ước lượng, không phải metadata từ Word/PDF. Bộ 1 được xếp ổn định theo điểm nhận thức (tính toán, tình huống, áp dụng, phân tích/phủ định), sau đó theo độ dài câu hỏi/lựa chọn và STT. Mỗi pool giữ nguyên bản ghi, STT, đáp án; năm pool chia đủ 1.000 STT, không chồng lặp.
 
@@ -99,7 +99,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v13`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 20 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v14`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 20 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
