@@ -1,6 +1,6 @@
-# Trắc nghiệm Quân y
+# Ôn Thi
 
-> Website trắc nghiệm tĩnh, chạy trên GitHub Pages tại `/TracNghiem/`, hỗ trợ cài PWA và làm bài offline.
+> Website ôn thi mobile-first, chạy trên GitHub Pages tại `/TracNghiem/`, hỗ trợ cài PWA và sử dụng offline. Có hai khu vực: Trắc nghiệm và Lý thuyết.
 
 ## Bộ đề
 
@@ -61,6 +61,7 @@ Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột
 
 - `index.html`, `style.css`, `app.js`: giao diện và logic quiz.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata các bộ đề. Thêm bộ đề tĩnh mới bằng cách thêm metadata ở đây và đưa JSON tương ứng vào app shell.
+- `theory-catalog.js`: danh mục nội dung Lý thuyết độc lập với danh mục bộ đề trắc nghiệm; hỗ trợ nguồn trắc nghiệm hiện có và nguồn tự luận.
 - `data/questions/`: ngân hàng JSON, chia theo môn để tránh dồn file ở thư mục gốc.
 - `data/templates/`: workbook mẫu và workbook dữ liệu Excel.
 - `scripts/generate-subject-exams.py`: kiểm tra DOCX và sinh năm mức cùng mã đề Toàn bộ cho mỗi môn Nội khoa/Ngoại khoa.
@@ -74,6 +75,7 @@ data/
 │   ├── to-chuc-quan-y/
 │   ├── noi-khoa/
 │   └── ngoai-khoa/
+├── theory/                     # Có thể thêm JSON tự luận độc lập ở đây
 └── templates/
 ```
 
@@ -83,11 +85,23 @@ Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js` v�
 
 Đề nhập từ Excel có thể gắn vào một môn/nhóm đề và vẫn chỉ được lưu trên thiết bị đang nhập.
 
+## Lý thuyết
+
+Tab Lý thuyết có lọc môn, tìm kiếm không phân biệt dấu trong câu hỏi và đáp án, cùng nút tải thêm từng nhóm 30 câu để giữ trang nhẹ trên điện thoại. Dữ liệu trắc nghiệm hiện có được chuyển thành cặp câu hỏi/đáp án bằng cách lấy nguyên văn lựa chọn ứng với `answer`. Nội dung này không thêm giải thích ngoài nguồn.
+
+Danh mục Lý thuyết độc lập trong `theory-catalog.js`, vì vậy môn chỉ có tự luận không cần khai báo trong `exam-catalog.js`. Để thêm một nguồn tự luận:
+
+1. Tạo file JSON là một mảng các đối tượng có `question` và `answer` dạng chuỗi; `stt` là tùy chọn.
+2. Thêm môn vào `subjects` trong `theory-catalog.js`, đặt `format: "essay"` và đường dẫn tương đối của file.
+3. Thêm đường dẫn file vào `APP_SHELL` trong `service-worker.js`, tăng phiên bản cache, rồi cập nhật tài liệu.
+
+Nguồn trắc nghiệm dùng `format: "multiple-choice"` và schema câu hỏi hiện tại. Các nguồn được nạp khi mở tab, lọc môn và tìm trong cả câu hỏi lẫn đáp án.
+
 ## Chạy và kiểm tra
 
 Chạy website bằng server tĩnh, ví dụ `python3 -m http.server 8000`, rồi mở `http://localhost:8000/`. Service worker cần HTTPS hoặc localhost.
 
-Kiểm tra JavaScript: `node --check app.js && node --check exam-catalog.js && node --check service-worker.js`.
+Kiểm tra JavaScript: `node --check app.js && node --check exam-catalog.js && node --check theory-catalog.js && node --check service-worker.js`.
 
 Kiểm tra JSON: `python3 -m json.tool manifest.json` và đọc toàn bộ file JSON dưới `data/questions/`; các bộ phải có đúng số câu trong bảng.
 

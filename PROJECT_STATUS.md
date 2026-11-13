@@ -2,16 +2,17 @@
 
 ## Mục tiêu
 
-Website tĩnh bằng HTML/CSS/JavaScript cho bài trắc nghiệm Quân y. Triển khai GitHub Pages dưới `/TracNghiem/`; mọi URL nội bộ dùng đường dẫn tương đối. Không có backend, đăng nhập hoặc đồng bộ dữ liệu giữa thiết bị.
+Website tĩnh bằng HTML/CSS/JavaScript cho ôn thi, giao diện mobile-first với hai tab Trắc nghiệm và Lý thuyết. Triển khai GitHub Pages dưới `/TracNghiem/`; mọi URL nội bộ dùng đường dẫn tương đối. Không có backend, đăng nhập hoặc đồng bộ dữ liệu giữa thiết bị.
 
 ## Cấu trúc và trách nhiệm
 
 - `data/questions/<môn>/`: toàn bộ ngân hàng JSON; mỗi môn có thư mục riêng.
 - `data/templates/`: file Excel mẫu và workbook mẫu.
-- `index.html`: các màn hình cấu hình, quiz, kết quả; bộ lọc môn/nhóm đề và điều khiển theme/import/cache.
-- `style.css`: giao diện sáng/tối, responsive và trạng thái quiz.
-- `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel và đăng ký service worker.
+- `index.html`: shell Ôn Thi, hai tab, các màn hình cấu hình/quiz/kết quả, bộ lọc Lý thuyết và điều khiển theme/import/cache.
+- `style.css`: giao diện mobile-first sáng/tối, thanh tab thuận tiện thao tác trên điện thoại, thẻ lý thuyết và trạng thái quiz.
+- `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel, tải/tìm/lọc dữ liệu Lý thuyết và đăng ký service worker.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
+- `theory-catalog.js`: danh mục Lý thuyết tách riêng khỏi mã đề; nguồn hiện tại là Tổ chức quân y 1.000 câu, Nội khoa 315 câu và Ngoại khoa 400 câu.
 - `data/questions/to-chuc-quan-y/`: dữ liệu nguồn 1.000/256 câu và các tập con 744/5 × 200 câu.
 - `scripts/generate-level-exams.py`: sinh lại năm pool độ khó, không sửa nguồn.
 - `data/questions/noi-khoa/`: năm pool Nội khoa, mỗi pool 63 câu, phủ đủ 315 câu, cộng file Toàn bộ.
@@ -79,6 +80,16 @@ DOCX nguồn không được lưu trong repository; cần có file nguồn khi c
 
 `loadQuestionData()` kiểm tra số lượng, STT duy nhất, đủ A–D và đáp án hợp lệ. Không renumber STT khi tạo tập con; tiến độ lưu ID câu bằng STT.
 
+Lý thuyết hiện lấy nguyên văn nội dung câu hỏi và lựa chọn đúng từ các bộ JSON đang có; không thêm diễn giải. `theory-catalog.js` hỗ trợ `format: "multiple-choice"` để chuyển lựa chọn đúng thành đáp án đọc được, hoặc `format: "essay"` cho dữ liệu độc lập có schema:
+
+```json
+[
+  { "stt": 1, "question": "Câu hỏi tự luận", "answer": "Nội dung đáp án" }
+]
+```
+
+`stt` là tùy chọn. Môn lý thuyết chỉ cần thêm vào `subjects` trong `theory-catalog.js`, không cần category hay mã đề trong `exam-catalog.js`. Lọc theo môn và tìm kiếm không phân biệt dấu hoạt động trên câu hỏi/đáp án; danh sách hiển thị 30 mục mỗi lần.
+
 ## Luồng quiz và lưu trữ
 
 - Chọn đề -> `loadQuestionData(key)` -> kiểm tra -> chọn số câu -> random không lặp -> quiz.
@@ -99,14 +110,14 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v14`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, 20 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v15`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
 
 ## Kiểm tra trước khi hoàn tất
 
-1. `node --check app.js && node --check exam-catalog.js && node --check service-worker.js`; parse `scripts/generate-subject-exams.py`.
+1. `node --check app.js && node --check exam-catalog.js && node --check theory-catalog.js && node --check service-worker.js`; parse `scripts/generate-subject-exams.py`.
 2. `python3 -m json.tool manifest.json`.
 3. Kiểm tra số lượng: 1000, 256, 744, 5 × 200, Nội khoa 315 tổng + 5 × 63, Ngoại khoa 400 tổng + 5 × 80; xác minh schema, STT, đáp án và overlap theo mục tiêu.
 4. Khi thêm đề, thử chọn từng khóa, xác nhận giới hạn, tải JSON và vào được quiz.

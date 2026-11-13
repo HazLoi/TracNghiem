@@ -1,12 +1,12 @@
 {
-  "name": "Trắc nghiệm Quân y",
-  "short_name": "Quân y",
-  "description": "Ứng dụng trắc nghiệm quân y nhiều bộ đề, hỗ trợ làm bài offline trên điện thoại Android.",
+  "name": "Ôn Thi",
+  "short_name": "Ôn Thi",
+  "description": "Ứng dụng ôn thi trắc nghiệm và đọc lý thuyết, hỗ trợ sử dụng offline trên điện thoại.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f6f4",
-  "theme_color": "#1b4332",
+  "theme_color": "#16624b",
   "orientation": "portrait",
   "icons": [
     {

@@ -3,27 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1b4332">
+  <meta name="theme-color" content="#16624b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Trắc nghiệm Quân y">
+  <meta name="apple-mobile-web-app-title" content="Ôn Thi">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icons/icon-192.png" type="image/png">
-  <title>Trắc nghiệm Quân y - nhiều bộ đề</title>
+  <title>Ôn Thi - Trắc nghiệm và Lý thuyết</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div class="container">
-  <h1>HỆ THỐNG TRẮC NGHIỆM QUÂN Y</h1>
-  <p class="subtitle">Chọn bộ câu hỏi, làm bài theo số lượng tùy chọn và ôn lại các câu sai đến khi đúng hết.</p>
-  <label class="theme-toggle" for="theme-toggle">
-    <input id="theme-toggle" type="checkbox">
-    <span>Giao diện tối</span>
-  </label>
-  <button id="refresh-cache-btn" class="refresh-cache-btn" type="button">Xóa cache PWA và tải bản mới</button>
-  <p id="refresh-cache-status" class="small-note refresh-cache-status" role="status" aria-live="polite"></p>
+<div class="container app-shell">
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">ÔT</span>
+      <div>
+        <h1>Ôn Thi</h1>
+        <p class="subtitle">Trắc nghiệm và tài liệu lý thuyết</p>
+      </div>
+    </div>
+    <label class="theme-toggle" for="theme-toggle">
+      <input id="theme-toggle" type="checkbox" aria-label="Bật hoặc tắt giao diện tối">
+      <span>Giao diện tối</span>
+    </label>
+  </header>
 
-  <section id="setup-screen" class="screen active">
+  <nav class="primary-tabs" role="tablist" aria-label="Nội dung ôn tập">
+    <button id="quiz-tab-button" class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="quiz-tab-panel">
+      <span class="tab-icon" aria-hidden="true">✓</span>
+      <span>Trắc nghiệm</span>
+    </button>
+    <button id="theory-tab-button" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="theory-tab-panel" tabindex="-1">
+      <span class="tab-icon" aria-hidden="true">≡</span>
+      <span>Lý thuyết</span>
+    </button>
+  </nav>
+
+  <main>
+    <section id="quiz-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="quiz-tab-button">
+      <section id="setup-screen" class="screen active">
+        <div class="section-heading">
+          <span class="eyebrow">LUYỆN TẬP</span>
+          <h2>Chọn bộ đề</h2>
+          <p>Chọn môn và số câu phù hợp với thời gian ôn tập của bạn.</p>
+        </div>
     <div class="form-group">
       <label for="subject-filter">Lọc theo môn/nhóm đề:</label>
       <select id="subject-filter"></select>
@@ -66,10 +89,15 @@
     <button id="start-btn" class="main-btn" type="button">Bắt đầu làm bài</button>
     <button id="resume-btn" class="main-btn" type="button" style="display:none">Tiếp tục bài đang làm</button>
     <p id="progress-save-note" class="small-note" aria-live="polite"></p>
-    <p class="small-note">Câu hỏi được chọn ngẫu nhiên, không trùng nhau trong cùng một bài. STT hiển thị là số thứ tự gốc trong tài liệu Word/PDF.</p>
-  </section>
+        <p class="small-note">Câu hỏi được chọn ngẫu nhiên, không trùng nhau trong cùng một bài. STT hiển thị là số thứ tự gốc trong tài liệu Word/PDF.</p>
+        <details class="app-tools">
+          <summary>Cập nhật ứng dụng offline</summary>
+          <button id="refresh-cache-btn" class="refresh-cache-btn" type="button">Xóa cache PWA và tải bản mới</button>
+          <p id="refresh-cache-status" class="small-note refresh-cache-status" role="status" aria-live="polite"></p>
+        </details>
+      </section>
 
-  <section id="quiz-screen" class="screen">
+      <section id="quiz-screen" class="screen">
     <div class="quiz-top">
       <span id="progress-text">Câu 1 / 20</span>
       <span id="wrong-count" class="wrong-count" aria-live="polite">Số câu đã sai: 0</span>
@@ -81,9 +109,9 @@
     <div id="question-text" class="question-box">Nội dung câu hỏi...</div>
     <ul id="options-list" class="options-list"></ul>
     <div id="feedback-box" class="feedback" aria-live="polite"></div>
-  </section>
+      </section>
 
-  <section id="result-screen" class="screen">
+      <section id="result-screen" class="screen">
     <div class="stats-card">
       <h2>KẾT QUẢ</h2>
       <p id="result-message">Bạn đã hoàn thành bài thi!</p>
@@ -96,7 +124,30 @@
       <button id="restart-btn" type="button">Thi lại / Đổi cấu hình</button>
     </div>
     <p id="storage-note" class="storage-note">Tiến độ bài làm được lưu trên trình duyệt đang sử dụng.</p>
-  </section>
+      </section>
+    </section>
+
+    <section id="theory-tab-panel" class="tab-panel theory-panel" role="tabpanel" aria-labelledby="theory-tab-button" hidden>
+      <div class="section-heading">
+        <span class="eyebrow">ĐỌC VÀ ÔN TẬP</span>
+        <h2>Thư viện lý thuyết</h2>
+        <p>Câu hỏi và đáp án đúng được trích từ tài liệu hiện có, không bổ sung diễn giải.</p>
+      </div>
+      <div class="theory-filters">
+        <div class="form-group">
+          <label for="theory-subject-filter">Lọc theo môn:</label>
+          <select id="theory-subject-filter"></select>
+        </div>
+        <div class="form-group">
+          <label for="theory-search">Tìm câu hỏi hoặc đáp án:</label>
+          <input id="theory-search" type="search" placeholder="Nhập từ khóa..." autocomplete="off">
+        </div>
+      </div>
+      <p id="theory-summary" class="theory-summary" role="status" aria-live="polite">Chọn môn hoặc nhập từ khóa để tìm nội dung.</p>
+      <div id="theory-results" class="theory-list"></div>
+      <button id="theory-load-more" class="theory-load-more" type="button" hidden>Xem thêm câu hỏi</button>
+    </section>
+  </main>
 </div>
 
 <div id="pause-modal" class="pause-modal" role="dialog" aria-modal="true" aria-labelledby="pause-title" aria-describedby="pause-description" hidden>
@@ -109,6 +160,7 @@
 </div>
 
 <script src="./exam-catalog.js" defer></script>
+<script src="./theory-catalog.js" defer></script>
 <script src="./vendor/xlsx.full.min.js" defer></script>
 <script src="./app.js" defer></script>
 </body>

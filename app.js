@@ -11,10 +11,13 @@ const THEME_STORAGE_KEY = 'quanYQuizTheme_v1';
 const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const EXAM_CATEGORIES = window.EXAM_CATALOG.categories;
 const BUILTIN_EXAMS = window.EXAM_CATALOG.exams;
+const THEORY_SUBJECTS = window.THEORY_CATALOG.subjects;
 const DEFAULT_CATEGORY_ID = EXAM_CATEGORIES[0].id;
 const customExamCatalog = loadCustomExamCatalog();
 const loadedQuestionPools = new Map();
 const questionIndexes = new Map();
+const loadedTheorySources = new Map();
+const THEORY_PAGE_SIZE = 30;
 let activeQuestions = [];
 let sessionQuestions = [];
 let wrongQuestions = [];
@@ -32,6 +35,9 @@ let autoAdvanceTimer = null;
 let selectedExamName = '';
 let pendingWorkbook = null;
 let validExcelSheets = [];
+let filteredTheoryEntries = [];
+let theoryRenderedCount = 0;
+let theoryLoadRequest = 0;
 
 const subjectFilter = document.getElementById('subject-filter');
 const examSelect = document.getElementById('exam-select');
@@ -52,6 +58,15 @@ const exitQuizBtn = document.getElementById('exit-quiz-btn');
 const setupScreen = document.getElementById('setup-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
+const quizTabButton = document.getElementById('quiz-tab-button');
+const theoryTabButton = document.getElementById('theory-tab-button');
+const quizTabPanel = document.getElementById('quiz-tab-panel');
+const theoryTabPanel = document.getElementById('theory-tab-panel');
+const theorySubjectFilter = document.getElementById('theory-subject-filter');
+const theorySearch = document.getElementById('theory-search');
+const theorySummary = document.getElementById('theory-summary');
+const theoryResults = document.getElementById('theory-results');
+const theoryLoadMoreButton = document.getElementById('theory-load-more');
 const progressText = document.getElementById('progress-text');
 const wrongCount = document.getElementById('wrong-count');
 const modeIndicator = document.getElementById('mode-indicator');
@@ -99,6 +114,170 @@ function getInitialTheme() {
 
 applyTheme(getInitialTheme());
 themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'dark' : 'light', true));
+
+function setActiveTab(tab) {
+  const showTheory = tab === 'theory';
+  const wasShowingTheory = !theoryTabPanel.hidden;
+  if (showTheory && quizScreen.classList.contains('active')) {
+    stopAutoAdvance();
+    saveProgress();
+    showScreen(setupScreen);
+    resumeBtn.style.display = 'block';
+    progressSaveNote.textContent = 'Bài làm đã tạm lưu. Bạn có thể tiếp tục từ câu đang làm bất cứ lúc nào.';
+  }
+
+  quizTabPanel.hidden = showTheory;
+  theoryTabPanel.hidden = !showTheory;
+  quizTabButton.classList.toggle('active', !showTheory);
+  theoryTabButton.classList.toggle('active', showTheory);
+  quizTabButton.setAttribute('aria-selected', String(!showTheory));
+  theoryTabButton.setAttribute('aria-selected', String(showTheory));
+  quizTabButton.tabIndex = showTheory ? -1 : 0;
+  theoryTabButton.tabIndex = showTheory ? 0 : -1;
+  if (showTheory && !wasShowingTheory) loadTheoryEntries();
+}
+
+quizTabButton.addEventListener('click', () => setActiveTab('quiz'));
+theoryTabButton.addEventListener('click', () => setActiveTab('theory'));
+
+function normalizeTheoryText(value) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase();
+}
+
+function normalizeTheoryQuestion(question, format, subject, index) {
+  if (!question || typeof question !== 'object') {
+    throw new Error(`Dữ liệu lý thuyết môn ${subject.name} có câu hỏi không hợp lệ.`);
+  }
+  const prompt = format === 'multiple-choice' ? question.q : question.question ?? question.q;
+  let answer = question.answer;
+  if (format === 'multiple-choice') {
+    if (typeof prompt !== 'string' || !Array.isArray(question.options)) {
+      throw new Error(`Câu ${index + 1} của môn ${subject.name} không đúng định dạng trắc nghiệm.`);
+    }
+    const correctOption = question.options.find(option => option?.letter === answer);
+    if (!correctOption || typeof correctOption.text !== 'string') {
+      throw new Error(`Không tìm thấy đáp án đúng ở câu ${question.stt ?? index + 1} môn ${subject.name}.`);
+    }
+    answer = correctOption.text;
+  }
+  if ((format !== 'multiple-choice' && format !== 'essay')
+    || typeof prompt !== 'string' || !prompt.trim()
+    || typeof answer !== 'string' || !answer.trim()) {
+    throw new Error(`Câu ${index + 1} của môn ${subject.name} thiếu câu hỏi hoặc đáp án.`);
+  }
+  return {
+    subjectId: subject.id,
+    subjectName: subject.name,
+    stt: Number.isInteger(question.stt) ? question.stt : index + 1,
+    question: prompt,
+    answer
+  };
+}
+
+async function loadTheorySource(subject, source) {
+  const cacheKey = `${subject.id}:${source.file}`;
+  if (loadedTheorySources.has(cacheKey)) return loadedTheorySources.get(cacheKey);
+  const response = await fetch(new URL(source.file, window.location.href));
+  if (!response.ok) throw new Error(`Không tải được dữ liệu lý thuyết môn ${subject.name} (${response.status}).`);
+  const questions = await response.json();
+  if (!Array.isArray(questions)) {
+    throw new Error(`Dữ liệu lý thuyết môn ${subject.name} không phải danh sách câu hỏi.`);
+  }
+  const entries = questions.map((question, index) => normalizeTheoryQuestion(question, source.format, subject, index));
+  loadedTheorySources.set(cacheKey, entries);
+  return entries;
+}
+
+async function loadTheoryEntries() {
+  const requestId = ++theoryLoadRequest;
+  const selectedSubjectId = theorySubjectFilter.value;
+  const subjects = selectedSubjectId === 'all'
+    ? THEORY_SUBJECTS
+    : THEORY_SUBJECTS.filter(subject => subject.id === selectedSubjectId);
+  theorySummary.textContent = 'Đang tải câu hỏi và đáp án...';
+  theoryResults.replaceChildren();
+  theoryLoadMoreButton.hidden = true;
+  try {
+    const subjectEntries = await Promise.all(subjects.map(async subject => {
+      const entries = await Promise.all(subject.sources.map(source => loadTheorySource(subject, source)));
+      return entries.flat();
+    }));
+    if (requestId !== theoryLoadRequest) return;
+    filteredTheoryEntries = subjectEntries.flat();
+    renderTheoryEntries();
+  } catch (error) {
+    if (requestId !== theoryLoadRequest) return;
+    console.error('Could not load theory content.', error);
+    filteredTheoryEntries = [];
+    theorySummary.textContent = `${error.message} Vui lòng kiểm tra kết nối rồi thử lại.`;
+  }
+}
+
+function renderTheoryEntries(resetCount = true) {
+  if (resetCount) {
+    theoryRenderedCount = 0;
+    theoryResults.replaceChildren();
+  }
+  const searchTerm = normalizeTheoryText(theorySearch.value.trim());
+  const matchingEntries = searchTerm
+    ? filteredTheoryEntries.filter(entry => normalizeTheoryText(`${entry.question} ${entry.answer}`).includes(searchTerm))
+    : filteredTheoryEntries;
+  const nextEntries = matchingEntries.slice(theoryRenderedCount, theoryRenderedCount + THEORY_PAGE_SIZE);
+  const cards = nextEntries.map(entry => {
+    const card = document.createElement('article');
+    card.className = 'theory-card';
+    const heading = document.createElement('div');
+    heading.className = 'theory-card-heading';
+    const number = document.createElement('h3');
+    number.textContent = `Câu ${entry.stt}`;
+    const subject = document.createElement('span');
+    subject.className = 'theory-subject-tag';
+    subject.textContent = entry.subjectName;
+    heading.append(number, subject);
+
+    const prompt = document.createElement('p');
+    prompt.className = 'theory-question';
+    prompt.textContent = entry.question;
+    const answer = document.createElement('div');
+    answer.className = 'theory-answer';
+    const answerLabel = document.createElement('span');
+    answerLabel.className = 'theory-answer-label';
+    answerLabel.textContent = 'Đáp án';
+    const answerText = document.createElement('p');
+    answerText.textContent = entry.answer;
+    answer.append(answerLabel, answerText);
+    card.append(heading, prompt, answer);
+    return card;
+  });
+  theoryResults.append(...cards);
+  theoryRenderedCount += nextEntries.length;
+  const shownCount = Math.min(theoryRenderedCount, matchingEntries.length);
+  theorySummary.textContent = searchTerm
+    ? `Tìm thấy ${matchingEntries.length.toLocaleString('vi-VN')} câu · Đang hiển thị ${shownCount.toLocaleString('vi-VN')}.`
+    : `Tổng cộng ${matchingEntries.length.toLocaleString('vi-VN')} câu · Đang hiển thị ${shownCount.toLocaleString('vi-VN')}.`;
+  if (!matchingEntries.length) {
+    theorySummary.textContent = searchTerm ? 'Không tìm thấy câu hỏi phù hợp.' : 'Môn này chưa có nội dung lý thuyết.';
+  }
+  theoryLoadMoreButton.hidden = shownCount >= matchingEntries.length;
+  theoryLoadMoreButton.textContent = `Xem thêm ${Math.min(THEORY_PAGE_SIZE, matchingEntries.length - shownCount)} câu`;
+}
+
+function renderTheorySubjectOptions() {
+  const allOption = document.createElement('option');
+  allOption.value = 'all';
+  allOption.textContent = 'Tất cả môn';
+  theorySubjectFilter.replaceChildren(allOption, ...THEORY_SUBJECTS.map(subject => {
+    const option = document.createElement('option');
+    option.value = subject.id;
+    option.textContent = subject.name;
+    return option;
+  }));
+}
+
+theorySubjectFilter.addEventListener('change', loadTheoryEntries);
+theorySearch.addEventListener('input', () => renderTheoryEntries());
+theoryLoadMoreButton.addEventListener('click', () => renderTheoryEntries(false));
 
 refreshCacheButton.addEventListener('click', async () => {
   refreshCacheButton.disabled = true;
@@ -995,6 +1174,7 @@ document.getElementById('restart-btn').addEventListener('click', () => {
 });
 
 renderCategoryOptions();
+renderTheorySubjectOptions();
 excelCategorySelect.replaceChildren(...EXAM_CATEGORIES.map(category => {
   const option = document.createElement('option');
   option.value = category.id;
