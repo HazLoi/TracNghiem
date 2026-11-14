@@ -98,7 +98,7 @@ const excelImportStatus = document.getElementById('excel-import-status');
 
 const DEFAULT_SETTINGS = {
   fontScale: 1,
-  correctDelaySeconds: 1
+  correctDelaySeconds: 0
 };
 
 function getQuizSettings() {
