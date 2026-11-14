@@ -82,7 +82,7 @@ data/
 └── templates/
 ```
 
-Option mã đề hiển thị tên và tổng số câu, ví dụ `Nội khoa - Toàn bộ câu hỏi (315 câu)`. Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ.
+Option mã đề hiển thị tên và tổng số câu, ví dụ `Nội khoa - Toàn bộ câu hỏi (315 câu)`. Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ. Nhãn chế độ chỉ hiện khi ôn lại câu sai, không hiện ở lượt thi đầu tiên.
 
 Trong lúc làm bài, có thể bấm bộ đếm câu sai để mở danh sách các câu đã trả lời sai, gồm câu hỏi, lựa chọn đã chọn và đáp án đúng. Danh sách tạm dừng thời gian tự chuyển câu; đóng danh sách sẽ tiếp tục bài.
 

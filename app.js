@@ -900,7 +900,6 @@ startBtn.addEventListener('click', async () => {
     selectedSourceLetter = null;
     autoAdvanceAt = null;
 
-    modeIndicator.textContent = 'Lần thi đầu tiên';
     showScreen(quizScreen);
     loadQuestion();
   } catch (error) {
@@ -1174,7 +1173,10 @@ function loadQuestion(resuming = false) {
   const q = activeQuestions[currentIndex];
   updateWrongCount();
   progressText.textContent = `Câu ${currentIndex + 1} / ${activeQuestions.length}`;
-  modeIndicator.textContent = isRetryMode ? `Ôn lại câu sai - vòng ${retryRound} (${activeQuestions.length} câu)` : 'Lần thi đầu tiên';
+  modeIndicator.hidden = !isRetryMode;
+  if (isRetryMode) {
+    modeIndicator.textContent = `Ôn lại câu sai - vòng ${retryRound} (${activeQuestions.length} câu)`;
+  }
   progressFill.style.width = `${((currentIndex + 1) / activeQuestions.length) * 100}%`;
   questionMeta.textContent = `STT gốc trong tài liệu: ${q.stt}`;
   questionText.textContent = `Câu ${q.stt}. ${q.q}`;
