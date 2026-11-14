@@ -99,6 +99,7 @@ Mỗi nguồn Lý thuyết có thể khai báo `section` để hiển thị nhã
 - Thứ tự lựa chọn bị xáo trộn khi hiển thị; `data-source-letter` giữ liên kết tới đáp án gốc.
 - Đúng tự chuyển sau 1 giây, sai sau 2 giây; sai có thể ôn lại cho tới khi đúng.
 - Tạm dừng/đổi tab lưu trạng thái và có thể khôi phục bài.
+- Sau lượt đầu, màn hình kết quả cho xem lại toàn bộ câu hỏi và bốn lựa chọn, tô xanh đáp án đúng/đỏ lựa chọn sai; hỗ trợ lọc đúng/sai và tìm kiếm.
 - `answeredWrongQuestionStts` trong tiến độ lưu các câu đã trả lời sai duy nhất; bộ đếm không tăng thêm khi trả lời sai lại cùng câu trong vòng ôn tập. Bản ghi tiến độ cũ được nâng cấp từ kết quả lần đầu và hàng đợi câu sai.
 - `localStorage`: `quanYQuizTienDo_v1` (tiến độ), `quanYQuizBoDeExcel_v1` (danh mục đề nhập và category), `quanYQuizTheme_v1` (theme).
 - `IndexedDB`: database `quanYQuizBoDeExcel`, object store `questionSets`, lưu câu hỏi của đề Excel theo thiết bị.

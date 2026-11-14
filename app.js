@@ -26,6 +26,7 @@ let nextWrongQuestions = [];
 let wrongQuestionStts = new Set();
 let currentIndex = 0;
 let firstAttemptResults = {};
+let firstAttemptAnswers = {};
 let isRetryMode = false;
 let retryRound = 0;
 let currentAnswered = false;
@@ -83,6 +84,11 @@ const questionText = document.getElementById('question-text');
 const optionsList = document.getElementById('options-list');
 const feedbackBox = document.getElementById('feedback-box');
 const retrySection = document.getElementById('retry-section');
+const reviewFilterButtons = [...document.querySelectorAll('.review-filter-button')];
+const reviewSearch = document.getElementById('review-search');
+const reviewSummary = document.getElementById('review-summary');
+const reviewQuestions = document.getElementById('review-questions');
+let activeReviewFilter = 'all';
 let pausedForBackground = false;
 
 const excelFileInput = document.getElementById('excel-file');
@@ -795,6 +801,7 @@ startBtn.addEventListener('click', async () => {
     nextWrongQuestions = [];
     wrongQuestionStts = new Set();
     firstAttemptResults = {};
+    firstAttemptAnswers = {};
     currentIndex = 0;
     retryRound = 0;
     isRetryMode = false;
@@ -842,6 +849,7 @@ function saveProgress() {
     nextWrongQuestionStts: nextWrongQuestions.map(question => question.stt),
     answeredWrongQuestionStts: [...wrongQuestionStts],
     firstAttemptResults,
+    firstAttemptAnswers,
     currentIndex,
     retryRound,
     isRetryMode,
@@ -1001,8 +1009,14 @@ async function loadSavedProgress() {
     return null;
   }
 
+  const savedFirstAttemptAnswers = saved.firstAttemptAnswers
+    && typeof saved.firstAttemptAnswers === 'object'
+    && !Array.isArray(saved.firstAttemptAnswers)
+    ? saved.firstAttemptAnswers
+    : {};
   return {
     ...saved,
+    firstAttemptAnswers: savedFirstAttemptAnswers,
     sessionQuestions: restoredSession,
     activeQuestions: restoredActive,
     wrongQuestions: restoredWrong,
@@ -1032,6 +1046,7 @@ resumeBtn.addEventListener('click', async () => {
   wrongQuestionStts = new Set(saved.answeredWrongQuestionStts);
   updateWrongCount();
   firstAttemptResults = saved.firstAttemptResults || {};
+  firstAttemptAnswers = saved.firstAttemptAnswers;
   currentIndex = saved.currentIndex;
   retryRound = saved.retryRound;
   isRetryMode = saved.isRetryMode;
@@ -1156,7 +1171,10 @@ function selectOption(selectedSource) {
     optionsList.querySelector(`[data-source-letter="${selectedSource}"]`)?.classList.add('incorrect');
   }
 
-  if (!isRetryMode) firstAttemptResults[question.stt] = isCorrect;
+  if (!isRetryMode) {
+    firstAttemptResults[question.stt] = isCorrect;
+    firstAttemptAnswers[question.stt] = selectedSource;
+  }
   if (!isCorrect) nextWrongQuestions.push(question);
 
   if (isCorrect) {
@@ -1213,9 +1231,104 @@ function getFirstAttemptStats() {
   return { total, correct };
 }
 
+function renderAnswerReview() {
+  const searchTerm = normalizeTheoryText(reviewSearch.value.trim());
+  const matchingQuestions = sessionQuestions.filter(question => {
+    const isCorrect = firstAttemptResults[question.stt] === true;
+    if (activeReviewFilter === 'correct' && !isCorrect) return false;
+    if (activeReviewFilter === 'wrong' && isCorrect) return false;
+    if (!searchTerm) return true;
+    const searchableText = normalizeTheoryText([
+      question.q,
+      ...question.options.map(option => option.text)
+    ].join(' '));
+    return searchableText.includes(searchTerm);
+  });
+
+  const cards = matchingQuestions.map(question => {
+    const isCorrect = firstAttemptResults[question.stt] === true;
+    const selectedLetter = firstAttemptAnswers[question.stt] || (isCorrect ? question.answer : null);
+    const card = document.createElement('article');
+    card.className = `review-question-card ${isCorrect ? 'answered-correct' : 'answered-wrong'}`;
+
+    const heading = document.createElement('div');
+    heading.className = 'review-question-heading';
+    const title = document.createElement('h3');
+    title.textContent = `Câu ${question.stt}`;
+    const result = document.createElement('span');
+    result.className = `review-result ${isCorrect ? 'correct' : 'wrong'}`;
+    result.textContent = isCorrect ? 'Trả lời đúng' : 'Trả lời sai';
+    heading.append(title, result);
+
+    const prompt = document.createElement('p');
+    prompt.className = 'review-question-text';
+    prompt.textContent = question.q;
+
+    const options = document.createElement('ul');
+    options.className = 'review-options';
+    question.options.forEach(option => {
+      const item = document.createElement('li');
+      item.className = 'review-option';
+      if (option.letter === question.answer) item.classList.add('correct');
+      if (option.letter === selectedLetter && option.letter !== question.answer) {
+        item.classList.add('incorrect');
+      }
+      const letter = document.createElement('span');
+      letter.className = 'review-option-letter';
+      letter.textContent = option.letter;
+      const text = document.createElement('span');
+      text.className = 'review-option-text';
+      text.textContent = option.text;
+      const marker = document.createElement('span');
+      marker.className = 'review-option-marker';
+      if (option.letter === question.answer) marker.textContent = 'Đáp án đúng';
+      else if (option.letter === selectedLetter) marker.textContent = 'Bạn đã chọn';
+      item.append(letter, text, marker);
+      options.appendChild(item);
+    });
+
+    if (!selectedLetter) {
+      const note = document.createElement('p');
+      note.className = 'review-legacy-note';
+      note.textContent = 'Lượt chọn đáp án này được lưu trước khi có chức năng xem lại.';
+      card.append(heading, prompt, options, note);
+    } else {
+      card.append(heading, prompt, options);
+    }
+    return card;
+  });
+
+  reviewQuestions.replaceChildren(...cards);
+  const correctCount = sessionQuestions.filter(question => firstAttemptResults[question.stt] === true).length;
+  const wrongCount = sessionQuestions.length - correctCount;
+  reviewSummary.textContent = `Tổng ${sessionQuestions.length} câu · Đúng ${correctCount} · Sai ${wrongCount} · Đang hiển thị ${matchingQuestions.length}${searchTerm ? ' kết quả' : ''}.`;
+  if (!matchingQuestions.length) reviewSummary.textContent = 'Không tìm thấy câu hỏi phù hợp với bộ lọc.';
+}
+
+reviewFilterButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    activeReviewFilter = button.dataset.reviewFilter;
+    reviewFilterButtons.forEach(filterButton => {
+      const isActive = filterButton === button;
+      filterButton.classList.toggle('active', isActive);
+      filterButton.setAttribute('aria-pressed', String(isActive));
+    });
+    renderAnswerReview();
+  });
+});
+reviewSearch.addEventListener('input', renderAnswerReview);
+
 function showResult() {
   const stats = getFirstAttemptStats();
   const progressCleared = clearSavedProgress();
+  activeReviewFilter = 'all';
+  reviewFilterButtons.forEach(button => {
+    const isActive = button.dataset.reviewFilter === activeReviewFilter;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+  reviewSearch.value = '';
+  renderAnswerReview();
 
   const message = document.getElementById('result-message');
   const retryDescription = document.getElementById('retry-description');

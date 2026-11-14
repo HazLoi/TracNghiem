@@ -83,6 +83,8 @@ data/
 
 Option mã đề hiển thị tên và tổng số câu, ví dụ `Nội khoa - Toàn bộ câu hỏi (315 câu)`. Khi chọn mã đề, ô số câu được điền bằng toàn bộ số câu của bộ đó; người dùng có thể giảm số câu trước khi bắt đầu. Trong lúc làm bài hiển thị số câu đã trả lời sai duy nhất (một câu sai lại trong các vòng ôn chỉ tính một lần); bộ đếm được lưu và khôi phục cùng tiến độ.
 
+Sau lượt đầu, màn hình kết quả liệt kê câu hỏi và đủ bốn lựa chọn, đánh dấu đáp án đúng màu xanh và đáp án đã chọn sai màu đỏ. Có thể lọc tất cả/đúng/sai hoặc tìm trong câu hỏi và lựa chọn. Ô tìm kiếm của Lý thuyết chiếm toàn bộ hàng để dễ thao tác trên điện thoại.
+
 Khi thêm môn/nhóm đề, cập nhật `categories` trong `exam-catalog.js` và tạo thư mục tương ứng dưới `data/questions/`. Khi thêm bộ đề, thêm mục vào `exams` với `id`, `categoryId`, `count`, `file`, `name`, đưa JSON vào thư mục môn và `APP_SHELL`, tăng `CACHE_NAME` trong `service-worker.js`, rồi cập nhật README và `PROJECT_STATUS.md`. Không cần sửa HTML để thêm bộ đề.
 
 Đề nhập từ Excel có thể gắn vào một môn/nhóm đề và vẫn chỉ được lưu trên thiết bị đang nhập.

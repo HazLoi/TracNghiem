@@ -144,6 +144,21 @@
       <h2>KẾT QUẢ</h2>
       <p id="result-message">Bạn đã hoàn thành bài thi!</p>
     </div>
+    <section class="review-section" aria-labelledby="review-title">
+      <div class="review-heading">
+        <h2 id="review-title">Xem lại câu trả lời</h2>
+        <p>Đáp án bạn chọn được đánh dấu đỏ nếu sai; đáp án đúng luôn được đánh dấu xanh.</p>
+      </div>
+      <div class="review-filters" role="group" aria-label="Lọc câu hỏi theo kết quả">
+        <button class="review-filter-button active" type="button" data-review-filter="all" aria-pressed="true">Tất cả</button>
+        <button class="review-filter-button" type="button" data-review-filter="correct" aria-pressed="false">Câu đúng</button>
+        <button class="review-filter-button" type="button" data-review-filter="wrong" aria-pressed="false">Câu sai</button>
+      </div>
+      <label class="review-search-label" for="review-search">Tìm câu hỏi hoặc đáp án</label>
+      <input id="review-search" class="review-search" type="search" placeholder="Nhập từ khóa..." autocomplete="off">
+      <p id="review-summary" class="review-summary" role="status" aria-live="polite"></p>
+      <div id="review-questions" class="review-questions"></div>
+    </section>
     <div id="retry-section" style="display:none">
       <p id="retry-description">Bạn vẫn còn câu trả lời sai. Hãy ôn lại để hoàn thành toàn bộ câu hỏi.</p>
       <button id="retry-wrong-btn" type="button">Làm lại các câu sai</button>
