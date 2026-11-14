@@ -128,7 +128,7 @@
       <section id="quiz-screen" class="screen">
     <div class="quiz-top">
       <span id="progress-text">Câu 1 / 20</span>
-      <span id="wrong-count" class="wrong-count" aria-live="polite">Số câu đã sai: 0</span>
+      <button id="wrong-count" class="wrong-count" type="button" aria-haspopup="dialog" aria-controls="wrong-answers-modal" aria-live="polite" disabled>Số câu đã sai: 0</button>
       <span id="mode-indicator" class="mode-indicator">Lần thi đầu tiên</span>
       <button id="pause-btn" class="pause-btn" type="button">Tạm dừng</button>
     </div>
@@ -191,6 +191,19 @@
       <button id="theory-load-more" class="theory-load-more" type="button" hidden>Xem thêm câu hỏi</button>
     </section>
   </main>
+</div>
+
+<div id="wrong-answers-modal" class="pause-modal wrong-answers-modal" role="dialog" aria-modal="true" aria-labelledby="wrong-answers-title" aria-describedby="wrong-answers-summary" hidden>
+  <section class="wrong-answers-dialog">
+    <div class="wrong-answers-header">
+      <div>
+        <h2 id="wrong-answers-title">Các câu đã trả lời sai</h2>
+        <p id="wrong-answers-summary" class="wrong-answers-summary"></p>
+      </div>
+      <button id="close-wrong-answers" class="close-wrong-answers" type="button" aria-label="Đóng danh sách câu sai">×</button>
+    </div>
+    <div id="wrong-answers-list" class="wrong-answers-list"></div>
+  </section>
 </div>
 
 <div id="pause-modal" class="pause-modal" role="dialog" aria-modal="true" aria-labelledby="pause-title" aria-describedby="pause-description" hidden>

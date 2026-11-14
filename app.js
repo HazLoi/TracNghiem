@@ -63,6 +63,10 @@ const pauseBtn = document.getElementById('pause-btn');
 const pauseModal = document.getElementById('pause-modal');
 const continueBtn = document.getElementById('continue-btn');
 const exitQuizBtn = document.getElementById('exit-quiz-btn');
+const wrongAnswersModal = document.getElementById('wrong-answers-modal');
+const closeWrongAnswersButton = document.getElementById('close-wrong-answers');
+const wrongAnswersSummary = document.getElementById('wrong-answers-summary');
+const wrongAnswersList = document.getElementById('wrong-answers-list');
 const setupScreen = document.getElementById('setup-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
@@ -543,7 +547,88 @@ examSelect.addEventListener('change', updateQuestionLimit);
 
 function updateWrongCount() {
   wrongCount.textContent = `Số câu đã sai: ${wrongQuestionStts.size}`;
+  wrongCount.disabled = wrongQuestionStts.size === 0;
+  wrongCount.setAttribute('aria-label', `Xem ${wrongQuestionStts.size} câu đã trả lời sai`);
 }
+
+function renderWrongAnswers() {
+  const incorrectQuestions = sessionQuestions.filter(question => wrongQuestionStts.has(question.stt));
+  wrongAnswersSummary.textContent = `Có ${incorrectQuestions.length} câu đã trả lời sai trong bài này.`;
+  const cards = incorrectQuestions.map(question => {
+    const card = document.createElement('article');
+    card.className = 'wrong-answer-card';
+
+    const heading = document.createElement('h3');
+    heading.textContent = `Câu ${question.stt}`;
+    const prompt = document.createElement('p');
+    prompt.className = 'wrong-answer-question';
+    prompt.textContent = question.q;
+
+    const options = document.createElement('ul');
+    options.className = 'wrong-answer-options';
+    const selectedLetter = firstAttemptAnswers[question.stt];
+    question.options.forEach(option => {
+      const item = document.createElement('li');
+      item.className = 'wrong-answer-option';
+      if (option.letter === question.answer) item.classList.add('correct');
+      if (option.letter === selectedLetter && option.letter !== question.answer) {
+        item.classList.add('incorrect');
+      }
+
+      const letter = document.createElement('span');
+      letter.className = 'wrong-answer-option-letter';
+      letter.textContent = option.letter;
+      const text = document.createElement('span');
+      text.className = 'wrong-answer-option-text';
+      text.textContent = option.text;
+      const marker = document.createElement('span');
+      marker.className = 'wrong-answer-option-marker';
+      if (option.letter === question.answer) marker.textContent = 'Đáp án đúng';
+      else if (option.letter === selectedLetter) marker.textContent = 'Bạn đã chọn';
+      item.append(letter, text, marker);
+      options.appendChild(item);
+    });
+
+    card.append(heading, prompt, options);
+    if (!selectedLetter) {
+      const note = document.createElement('p');
+      note.className = 'wrong-answer-note';
+      note.textContent = 'Không có lựa chọn sai được lưu cho câu này.';
+      card.appendChild(note);
+    }
+    return card;
+  });
+  wrongAnswersList.replaceChildren(...cards);
+}
+
+function openWrongAnswers() {
+  if (!wrongQuestionStts.size) return;
+  stopAutoAdvance();
+  saveProgress();
+  renderWrongAnswers();
+  wrongAnswersModal.hidden = false;
+  closeWrongAnswersButton.focus();
+}
+
+function closeWrongAnswers() {
+  wrongAnswersModal.hidden = true;
+  if (quizScreen.classList.contains('active') && pauseModal.hidden) {
+    scheduleAutoAdvance();
+    wrongCount.focus();
+  }
+}
+
+wrongCount.addEventListener('click', openWrongAnswers);
+closeWrongAnswersButton.addEventListener('click', closeWrongAnswers);
+wrongAnswersModal.addEventListener('click', event => {
+  if (event.target === wrongAnswersModal) closeWrongAnswers();
+});
+wrongAnswersModal.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeWrongAnswers();
+  }
+});
 
 function renderCategoryOptions(selectedCategoryId = subjectFilter.value || DEFAULT_CATEGORY_ID) {
   subjectFilter.replaceChildren(...EXAM_CATEGORIES.map(category => {
@@ -893,14 +978,19 @@ pauseBtn.addEventListener('click', openPauseModal);
 
 continueBtn.addEventListener('click', () => {
   closePauseModal();
-  scheduleAutoAdvance();
-  pauseBtn.focus();
+  if (wrongAnswersModal.hidden) {
+    scheduleAutoAdvance();
+    pauseBtn.focus();
+  } else {
+    closeWrongAnswersButton.focus();
+  }
 });
 
 exitQuizBtn.addEventListener('click', () => {
   stopAutoAdvance();
   saveProgress();
   closePauseModal();
+  wrongAnswersModal.hidden = true;
   showScreen(setupScreen);
   resumeBtn.style.display = 'block';
   progressSaveNote.textContent = 'Bài làm đã tạm lưu. Bạn có thể tiếp tục từ câu đang làm bất cứ lúc nào.';
