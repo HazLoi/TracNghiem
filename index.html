@@ -22,11 +22,39 @@
         <p class="subtitle">Trắc nghiệm và tài liệu lý thuyết</p>
       </div>
     </div>
-    <label class="theme-toggle" for="theme-toggle">
-      <input id="theme-toggle" type="checkbox" aria-label="Bật hoặc tắt giao diện tối">
-      <span>Giao diện tối</span>
-    </label>
+    <div class="header-actions">
+      <button id="settings-button" class="settings-button" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Cài đặt ứng dụng">⚙️</button>
+      <label class="theme-toggle" for="theme-toggle">
+        <input id="theme-toggle" type="checkbox" aria-label="Bật hoặc tắt giao diện tối">
+        <span>Giao diện tối</span>
+      </label>
+    </div>
   </header>
+
+  <aside id="settings-panel" class="settings-panel" hidden>
+    <div class="settings-header">
+      <h2>Cài đặt</h2>
+      <button id="close-settings-button" class="close-settings-button" type="button" aria-label="Đóng cài đặt">×</button>
+    </div>
+    <div class="settings-grid">
+      <label class="settings-field" for="font-scale-select">
+        <span>Cỡ chữ</span>
+        <select id="font-scale-select">
+          <option value="0.9">Nhỏ</option>
+          <option value="1">Bình thường</option>
+          <option value="1.1">Lớn</option>
+          <option value="1.2">Rất lớn</option>
+        </select>
+      </label>
+      <label class="settings-field" for="correct-delay-input">
+        <span>Thời gian sang câu đúng</span>
+        <div class="settings-input-wrap">
+          <input id="correct-delay-input" type="number" min="0.5" max="5" step="0.5" value="1">
+          <span>giây</span>
+        </div>
+      </label>
+    </div>
+  </aside>
 
   <nav class="primary-tabs" role="tablist" aria-label="Nội dung ôn tập">
     <button id="quiz-tab-button" class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="quiz-tab-panel">

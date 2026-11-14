@@ -8,6 +8,7 @@ const CUSTOM_EXAMS_STORAGE_KEY = 'quanYQuizBoDeExcel_v1';
 const CUSTOM_EXAMS_DB_NAME = 'quanYQuizBoDeExcel';
 const CUSTOM_EXAMS_DB_STORE = 'questionSets';
 const THEME_STORAGE_KEY = 'quanYQuizTheme_v1';
+const SETTINGS_STORAGE_KEY = 'quanYQuizSettings_v1';
 const QUESTION_LETTERS = ['A', 'B', 'C', 'D'];
 const EXAM_CATEGORIES = window.EXAM_CATALOG.categories;
 const BUILTIN_EXAMS = window.EXAM_CATALOG.exams;
@@ -47,6 +48,12 @@ const startBtn = document.getElementById('start-btn');
 const resumeBtn = document.getElementById('resume-btn');
 const progressSaveNote = document.getElementById('progress-save-note');
 const themeToggle = document.getElementById('theme-toggle');
+const settingsButton = document.getElementById('settings-button');
+const settingsPanel = document.getElementById('settings-panel');
+const closeSettingsButton = document.getElementById('close-settings-button');
+const fontScaleSelect = document.getElementById('font-scale-select');
+const correctDelayInput = document.getElementById('correct-delay-input');
+const primaryTabs = document.querySelector('.primary-tabs');
 const refreshCacheButton = document.getElementById('refresh-cache-btn');
 const refreshCacheStatus = document.getElementById('refresh-cache-status');
 const importToggleButton = document.getElementById('import-toggle');
@@ -89,6 +96,39 @@ const importExamButton = document.getElementById('import-exam-btn');
 const deleteExamButton = document.getElementById('delete-exam-btn');
 const excelImportStatus = document.getElementById('excel-import-status');
 
+const DEFAULT_SETTINGS = {
+  fontScale: 1,
+  correctDelaySeconds: 1
+};
+
+function getQuizSettings() {
+  const fallback = { ...DEFAULT_SETTINGS };
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return fallback;
+    return {
+      fontScale: Number(parsed.fontScale) > 0 ? Number(parsed.fontScale) : DEFAULT_SETTINGS.fontScale,
+      correctDelaySeconds: Number(parsed.correctDelaySeconds) > 0 ? Number(parsed.correctDelaySeconds) : DEFAULT_SETTINGS.correctDelaySeconds
+    };
+  } catch (error) {
+    console.warn('Could not read saved app settings.', error);
+    return fallback;
+  }
+}
+
+function saveQuizSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+      fontScale: Number(settings.fontScale) || DEFAULT_SETTINGS.fontScale,
+      correctDelaySeconds: Number(settings.correctDelaySeconds) || DEFAULT_SETTINGS.correctDelaySeconds
+    }));
+  } catch (error) {
+    console.warn('Could not save app settings.', error);
+  }
+}
+
 function applyTheme(theme, persist = false) {
   const selectedTheme = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.dataset.theme = selectedTheme;
@@ -102,6 +142,17 @@ function applyTheme(theme, persist = false) {
   }
 }
 
+function applyQuizSettings(persist = false) {
+  const settings = getQuizSettings();
+  const safeScale = Number(settings.fontScale) > 0 ? Number(settings.fontScale) : DEFAULT_SETTINGS.fontScale;
+  const safeDelay = Number(settings.correctDelaySeconds) > 0 ? Number(settings.correctDelaySeconds) : DEFAULT_SETTINGS.correctDelaySeconds;
+  document.documentElement.style.setProperty('--app-font-scale', String(safeScale));
+  document.documentElement.style.setProperty('--correct-delay-seconds', String(safeDelay));
+  if (fontScaleSelect) fontScaleSelect.value = String(safeScale);
+  if (correctDelayInput) correctDelayInput.value = String(safeDelay);
+  if (persist) saveQuizSettings({ fontScale: safeScale, correctDelaySeconds: safeDelay });
+}
+
 function getInitialTheme() {
   try {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -113,12 +164,37 @@ function getInitialTheme() {
 }
 
 applyTheme(getInitialTheme());
+applyQuizSettings(false);
 themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'dark' : 'light', true));
+
+settingsButton?.addEventListener('click', () => {
+  if (!settingsPanel) return;
+  settingsPanel.hidden = !settingsPanel.hidden;
+  settingsButton.setAttribute('aria-expanded', String(!settingsPanel.hidden));
+});
+
+closeSettingsButton?.addEventListener('click', () => {
+  if (!settingsPanel) return;
+  settingsPanel.hidden = true;
+  settingsButton?.setAttribute('aria-expanded', 'false');
+});
+
+fontScaleSelect?.addEventListener('change', () => {
+  const nextScale = Number(fontScaleSelect.value) || DEFAULT_SETTINGS.fontScale;
+  saveQuizSettings({ fontScale: nextScale, correctDelaySeconds: Number(correctDelayInput?.value) || DEFAULT_SETTINGS.correctDelaySeconds });
+  applyQuizSettings(false);
+});
+
+correctDelayInput?.addEventListener('change', () => {
+  const nextDelay = Number(correctDelayInput.value) || DEFAULT_SETTINGS.correctDelaySeconds;
+  saveQuizSettings({ fontScale: Number(fontScaleSelect?.value) || DEFAULT_SETTINGS.fontScale, correctDelaySeconds: nextDelay });
+  applyQuizSettings(false);
+});
 
 function setActiveTab(tab) {
   const showTheory = tab === 'theory';
   const wasShowingTheory = !theoryTabPanel.hidden;
-  if (showTheory && quizScreen.classList.contains('active')) {
+  if (showTheory && (quizScreen.classList.contains('active') || resultScreen.classList.contains('active'))) {
     stopAutoAdvance();
     saveProgress();
     showScreen(setupScreen);
@@ -135,6 +211,13 @@ function setActiveTab(tab) {
   quizTabButton.tabIndex = showTheory ? -1 : 0;
   theoryTabButton.tabIndex = showTheory ? 0 : -1;
   if (showTheory && !wasShowingTheory) loadTheoryEntries();
+  updatePrimaryTabsVisibility();
+}
+
+function updatePrimaryTabsVisibility() {
+  if (!primaryTabs) return;
+  const shouldHideTabs = quizScreen.classList.contains('active') || resultScreen.classList.contains('active');
+  primaryTabs.hidden = shouldHideTabs;
 }
 
 quizTabButton.addEventListener('click', () => setActiveTab('quiz'));
@@ -680,6 +763,7 @@ function shuffleAndTake(array, count) {
 function showScreen(screenToShow) {
   [setupScreen, quizScreen, resultScreen].forEach(screen => screen.classList.remove('active'));
   screenToShow.classList.add('active');
+  updatePrimaryTabsVisibility();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1047,7 +1131,9 @@ function scheduleAutoAdvance() {
 }
 
 function getAutoAdvanceDelay(question, selectedSource) {
-  return selectedSource === question?.answer ? 1000 : 2000;
+  const settings = getQuizSettings();
+  const correctDelayMs = (Number(settings.correctDelaySeconds) || DEFAULT_SETTINGS.correctDelaySeconds) * 1000;
+  return selectedSource === question?.answer ? correctDelayMs : 2000;
 }
 
 function selectOption(selectedSource) {
