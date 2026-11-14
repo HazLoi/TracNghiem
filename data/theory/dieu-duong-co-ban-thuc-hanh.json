@@ -1,0 +1,37 @@
+[
+  {
+    "stt": 1,
+    "question": "Thực hành câu số 1: Lấy dấu hiệu sinh hiệu trên người bệnh và ghi kết quả vào bảng theo dõi.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật lấy dấu hiệu sinh hiệu; ghi kết quả vào bảng theo dõi."
+  },
+  {
+    "stt": 2,
+    "question": "Thực hành câu số 2: Tiêm cơ delta trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật tiêm cơ delta trên mô hình bằng Vitamin B12 1000 mcg/ml, 01 ống; ghi phiếu thuốc. Quy trình chuẩn bị và kỹ thuật tiêm bắp nông ở cơ delta được trình bày tại mục Lý thuyết, câu 1."
+  },
+  {
+    "stt": 3,
+    "question": "Thực hành câu số 3: Tiêm mông trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật tiêm mông trên mô hình bằng Vitamin B12 1000 mcg/ml, 01 ống; ghi phiếu thuốc. Quy trình chuẩn bị và kỹ thuật tiêm bắp sâu ở mông được trình bày tại mục Lý thuyết, câu 2."
+  },
+  {
+    "stt": 4,
+    "question": "Thực hành câu số 4: Tiêm tĩnh mạch trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật tiêm tĩnh mạch trên mô hình bằng NaCl 0,9%, 03 ml hoặc Glucose 5%, 03 ml; ghi phiếu thuốc. Quy trình chuẩn bị và kỹ thuật tiêm tĩnh mạch được trình bày tại mục Lý thuyết, câu 3."
+  },
+  {
+    "stt": 5,
+    "question": "Thực hành câu số 5: Truyền dịch trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật truyền dịch trên mô hình bằng một trong các dịch: NaCl 0,9%, chai 500 ml, 01 chai; Glucose 5%, chai 500 ml, 01 chai; hoặc Ringer Lactate, chai 500 ml, 01 chai. Ghi phiếu truyền dịch. Quy trình chuẩn bị và kỹ thuật truyền dịch tĩnh mạch được trình bày tại mục Lý thuyết, câu 4."
+  },
+  {
+    "stt": 6,
+    "question": "Thực hành câu số 6: Thay băng vết thương thường trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật thay băng vết thương thường trên mô hình. Quy trình chuẩn bị và kỹ thuật thay băng vết thương được trình bày tại mục Lý thuyết, câu 5."
+  },
+  {
+    "stt": 7,
+    "question": "Thực hành câu số 7: Thay băng vết thương truyền nhiễm trên mô hình.",
+    "answer": "Yêu cầu trong đề cương: chuẩn bị người bệnh và dụng cụ; thực hiện kỹ thuật thay băng vết thương truyền nhiễm trên mô hình. Ảnh đề cương được cung cấp chỉ nêu yêu cầu của trạm này, không có các bước kỹ thuật chi tiết."
+  }
+]

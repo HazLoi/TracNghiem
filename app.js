@@ -145,7 +145,7 @@ function normalizeTheoryText(value) {
     .replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase();
 }
 
-function normalizeTheoryQuestion(question, format, subject, index) {
+function normalizeTheoryQuestion(question, format, subject, index, section) {
   if (!question || typeof question !== 'object') {
     throw new Error(`Dữ liệu lý thuyết môn ${subject.name} có câu hỏi không hợp lệ.`);
   }
@@ -169,6 +169,7 @@ function normalizeTheoryQuestion(question, format, subject, index) {
   return {
     subjectId: subject.id,
     subjectName: subject.name,
+    section,
     stt: Number.isInteger(question.stt) ? question.stt : index + 1,
     question: prompt,
     answer
@@ -184,7 +185,8 @@ async function loadTheorySource(subject, source) {
   if (!Array.isArray(questions)) {
     throw new Error(`Dữ liệu lý thuyết môn ${subject.name} không phải danh sách câu hỏi.`);
   }
-  const entries = questions.map((question, index) => normalizeTheoryQuestion(question, source.format, subject, index));
+  const entries = questions.map((question, index) =>
+    normalizeTheoryQuestion(question, source.format, subject, index, source.section));
   loadedTheorySources.set(cacheKey, entries);
   return entries;
 }
@@ -230,7 +232,7 @@ function renderTheoryEntries(resetCount = true) {
     const heading = document.createElement('div');
     heading.className = 'theory-card-heading';
     const number = document.createElement('h3');
-    number.textContent = `Câu ${entry.stt}`;
+    number.textContent = entry.section ? `${entry.section} · Câu ${entry.stt}` : `Câu ${entry.stt}`;
     const subject = document.createElement('span');
     subject.className = 'theory-subject-tag';
     subject.textContent = entry.subjectName;

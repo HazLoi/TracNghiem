@@ -12,14 +12,15 @@ Website tĩnh bằng HTML/CSS/JavaScript cho ôn thi, giao diện mobile-first v
 - `style.css`: giao diện mobile-first sáng/tối, thanh tab thuận tiện thao tác trên điện thoại, thẻ lý thuyết và trạng thái quiz.
 - `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel, tải/tìm/lọc dữ liệu Lý thuyết và đăng ký service worker.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
-- `theory-catalog.js`: danh mục Lý thuyết tách riêng khỏi mã đề; nguồn hiện tại là Tổ chức quân y 1.000 câu, Nội khoa 315 câu và Ngoại khoa 400 câu.
+- `theory-catalog.js`: danh mục Lý thuyết tách riêng khỏi mã đề; nguồn hiện tại là Tổ chức quân y 1.000 câu, Nội khoa 315 câu, Ngoại khoa 400 câu và Điều dưỡng cơ bản (6 câu lý thuyết, 7 yêu cầu thực hành).
+- `data/theory/`: nguồn JSON tự luận của Điều dưỡng cơ bản; quy trình thực hành chỉ chi tiết theo nội dung đọc được từ tài liệu ảnh.
 - `data/questions/to-chuc-quan-y/`: dữ liệu nguồn 1.000/256 câu và các tập con 744/5 × 200 câu.
 - `scripts/generate-level-exams.py`: sinh lại năm pool độ khó, không sửa nguồn.
 - `data/questions/noi-khoa/`: năm pool Nội khoa, mỗi pool 63 câu, phủ đủ 315 câu, cộng file Toàn bộ.
 - `data/questions/noi-khoa/questions-noi-khoa-all.json`: ngân hàng đủ 315 câu Nội khoa.
 - `data/questions/ngoai-khoa/`: năm pool Ngoại khoa, mỗi pool 80 câu, phủ đủ 400 câu, cộng file Toàn bộ.
 - `scripts/generate-subject-exams.py`: đọc DOCX, lấy đáp án từ lựa chọn in đậm, kiểm tra dữ liệu và tạo năm pool cùng file tổng cho mỗi môn.
-- `service-worker.js`, `manifest.json`, `icons/`: PWA và hoạt động offline.
+- `service-worker.js`, `manifest.json`, `icons/`: PWA và hoạt động offline. App shell gồm cả hai nguồn Điều dưỡng cơ bản trong `data/theory/`.
 - `vendor/xlsx.full.min.js`, `vendor/XLSX-LICENSE.txt`: parser SheetJS nội bộ và giấy phép; không dùng CDN.
 - `data/templates/mau-nhap-cau-hoi.xlsx`: workbook trống dùng để nhập đề.
 - `data/templates/bo-de-trac-nghiem-mau.xlsx`: workbook chứa hai bộ dữ liệu đã chuẩn hóa và sheet mẫu.
@@ -90,6 +91,8 @@ Lý thuyết hiện lấy nguyên văn nội dung câu hỏi và lựa chọn đ
 
 `stt` là tùy chọn. Môn lý thuyết chỉ cần thêm vào `subjects` trong `theory-catalog.js`, không cần category hay mã đề trong `exam-catalog.js`. Lọc theo môn và tìm kiếm không phân biệt dấu hoạt động trên câu hỏi/đáp án; danh sách hiển thị 30 mục mỗi lần.
 
+Mỗi nguồn Lý thuyết có thể khai báo `section` để hiển thị nhãn phần cùng số câu, hữu ích khi nhiều phần có STT riêng. Điều dưỡng cơ bản có sáu câu lý thuyết và bảy trạm/yêu cầu thực hành. Nội dung chi tiết của trạm thay băng vết thương truyền nhiễm chưa có trong ảnh; không tự suy diễn quy trình.
+
 ## Luồng quiz và lưu trữ
 
 - Chọn đề -> `loadQuestionData(key)` -> kiểm tra -> chọn số câu -> random không lặp -> quiz.
@@ -110,7 +113,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v15`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v16`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.

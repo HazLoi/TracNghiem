@@ -75,7 +75,9 @@ data/
 │   ├── to-chuc-quan-y/
 │   ├── noi-khoa/
 │   └── ngoai-khoa/
-├── theory/                     # Có thể thêm JSON tự luận độc lập ở đây
+├── theory/
+│   ├── dieu-duong-co-ban-ly-thuyet.json
+│   └── dieu-duong-co-ban-thuc-hanh.json
 └── templates/
 ```
 
@@ -96,6 +98,8 @@ Danh mục Lý thuyết độc lập trong `theory-catalog.js`, vì vậy môn c
 3. Thêm đường dẫn file vào `APP_SHELL` trong `service-worker.js`, tăng phiên bản cache, rồi cập nhật tài liệu.
 
 Nguồn trắc nghiệm dùng `format: "multiple-choice"` và schema câu hỏi hiện tại. Các nguồn được nạp khi mở tab, lọc môn và tìm trong cả câu hỏi lẫn đáp án.
+
+Môn Điều dưỡng cơ bản có sáu câu lý thuyết và bảy yêu cầu thực hành trong `data/theory/`; các thẻ hiển thị nhãn phần và số câu riêng. Nội dung thực hành giữ theo phạm vi và vật tư đọc được từ ảnh đề cương; nơi ảnh không có quy trình chi tiết sẽ được ghi rõ, không tự bổ sung các bước.
 
 ## Chạy và kiểm tra
 

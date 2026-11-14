@@ -29,6 +29,22 @@ window.THEORY_CATALOG = {
           format: 'multiple-choice'
         }
       ]
+    },
+    {
+      id: 'dieu-duong-co-ban',
+      name: 'Điều dưỡng cơ bản',
+      sources: [
+        {
+          file: './data/theory/dieu-duong-co-ban-ly-thuyet.json',
+          format: 'essay',
+          section: 'Lý thuyết'
+        },
+        {
+          file: './data/theory/dieu-duong-co-ban-thuc-hanh.json',
+          format: 'essay',
+          section: 'Thực hành'
+        }
+      ]
     }
   ]
 };
