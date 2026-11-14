@@ -60,6 +60,7 @@ Có thể thêm đề từ Excel trên giao diện. Mỗi sheet cần các cột
 ## Kiến trúc
 
 - `index.html`, `style.css`, `app.js`: giao diện và logic quiz.
+- Nút mặt trăng trên thanh đầu trang đổi giữa giao diện sáng và tối; chế độ hiện tại được lưu trên thiết bị.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata các bộ đề. Thêm bộ đề tĩnh mới bằng cách thêm metadata ở đây và đưa JSON tương ứng vào app shell.
 - `theory-catalog.js`: danh mục nội dung Lý thuyết độc lập với danh mục bộ đề trắc nghiệm; hỗ trợ nguồn trắc nghiệm hiện có và nguồn tự luận.
 - `data/questions/`: ngân hàng JSON, chia theo môn để tránh dồn file ở thư mục gốc.

@@ -142,7 +142,11 @@ function saveQuizSettings(settings) {
 function applyTheme(theme, persist = false) {
   const selectedTheme = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.dataset.theme = selectedTheme;
-  themeToggle.checked = selectedTheme === 'dark';
+  const isDark = selectedTheme === 'dark';
+  const toggleLabel = `Chuyển sang giao diện ${isDark ? 'sáng' : 'tối'}`;
+  themeToggle.setAttribute('aria-label', toggleLabel);
+  themeToggle.setAttribute('aria-pressed', String(isDark));
+  themeToggle.title = toggleLabel;
   if (persist) {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
@@ -175,7 +179,8 @@ function getInitialTheme() {
 
 applyTheme(getInitialTheme());
 applyQuizSettings(false);
-themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'dark' : 'light', true));
+themeToggle.addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
 
 settingsButton?.addEventListener('click', () => {
   if (!settingsPanel) return;
@@ -1428,15 +1433,15 @@ function showResult() {
     retrySection.style.display = 'block';
     retryButton.textContent = 'Làm lại các câu sai';
     if (isRetryMode) {
-      message.textContent = `Kết quả lần đầu: ${stats.correct}/${stats.total} câu đúng.`;
-      retryDescription.textContent = `Vòng ôn tập ${retryRound} vẫn còn câu chưa đúng. Hãy tiếp tục làm lại; kết quả lần đầu không thay đổi.`;
+      message.textContent = `Kết quả: ${stats.correct}/${stats.total} câu đúng.`;
+      retryDescription.textContent = `Vòng ôn tập ${retryRound} vẫn còn câu chưa đúng. Hãy tiếp tục làm lại.`;
     } else {
       message.textContent = `Bạn đúng ${stats.correct}/${stats.total} câu.`;
       retryDescription.textContent = 'Bạn còn câu trả lời sai. Làm lại các câu này đến khi trả lời đúng hết.';
     }
   } else {
     retrySection.style.display = 'none';
-    message.textContent = `${isRetryMode ? 'Kết quả lần đầu' : 'Kết quả'}: ${stats.correct}/${stats.total} câu đúng.`;
+    message.textContent = `Kết quả: ${stats.correct}/${stats.total} câu đúng.`;
   }
 
   document.getElementById('storage-note').textContent = progressCleared

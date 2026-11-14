@@ -8,8 +8,8 @@ Website tĩnh bằng HTML/CSS/JavaScript cho ôn thi, giao diện mobile-first v
 
 - `data/questions/<môn>/`: toàn bộ ngân hàng JSON; mỗi môn có thư mục riêng.
 - `data/templates/`: file Excel mẫu và workbook mẫu.
-- `index.html`: shell Ôn Thi, hai tab, các màn hình cấu hình/quiz/kết quả, bộ lọc Lý thuyết và điều khiển theme/import/cache.
-- `style.css`: giao diện mobile-first sáng/tối, thanh tab thuận tiện thao tác trên điện thoại, thẻ lý thuyết và trạng thái quiz.
+- `index.html`: shell Ôn Thi, hai tab, các màn hình cấu hình/quiz/kết quả, bộ lọc Lý thuyết và nút mặt trăng đổi theme/import/cache.
+- `style.css`: giao diện mobile-first sáng/tối, nút mặt trăng báo màu theo theme, thanh tab thuận tiện thao tác trên điện thoại, thẻ lý thuyết và trạng thái quiz.
 - `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel, tải/tìm/lọc dữ liệu Lý thuyết và đăng ký service worker.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
 - `theory-catalog.js`: danh mục Lý thuyết tách riêng khỏi mã đề; nguồn hiện tại là Tổ chức quân y 1.000 câu, Nội khoa 315 câu, Ngoại khoa 400 câu và Điều dưỡng cơ bản (6 câu lý thuyết, 7 yêu cầu thực hành).
@@ -115,7 +115,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v16`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v19`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
