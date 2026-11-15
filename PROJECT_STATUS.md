@@ -103,6 +103,7 @@ Mỗi nguồn Lý thuyết có thể khai báo `section` để hiển thị nhã
 - Đúng tự chuyển sau 1 giây, sai sau 2 giây; sai có thể ôn lại cho tới khi đúng.
 - Tạm dừng/đổi tab lưu trạng thái và có thể khôi phục bài.
 - Sau lượt đầu, màn hình kết quả cho xem lại toàn bộ câu hỏi và bốn lựa chọn, tô xanh đáp án đúng/đỏ lựa chọn sai; hỗ trợ lọc đúng/sai và tìm kiếm.
+- Nút làm lại câu sai và thi lại/đổi cấu hình nằm phía trên danh sách câu trả lời trên màn hình kết quả.
 - Trong khi làm bài, bấm bộ đếm câu sai mở popup xem câu hỏi, lựa chọn đã chọn sai và đáp án đúng; bộ đếm bị vô hiệu hóa khi chưa có câu sai, và timer tạm dừng đến khi đóng popup.
 - Bộ đếm `Đã trả lời` mở danh sách câu đã trả lời trong bài hiện tại, tìm theo STT/nội dung, phân biệt đúng/sai và đánh dấu lựa chọn đã chọn cùng đáp án đúng; timer tạm dừng trong lúc xem.
 - Nếu bộ đề có câu trùng nội dung, bài làm loại bản ghi trùng và hiện thông báo số câu duy nhất khả dụng; số câu trong thanh tiến độ khớp số câu thực tế.
@@ -120,7 +121,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v22`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v23`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
