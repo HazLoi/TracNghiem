@@ -24,6 +24,7 @@ let sessionQuestions = [];
 let wrongQuestions = [];
 let nextWrongQuestions = [];
 let wrongQuestionStts = new Set();
+let answeredQuestionOrder = [];
 let currentIndex = 0;
 let firstAttemptResults = {};
 let firstAttemptAnswers = {};
@@ -67,6 +68,7 @@ const wrongAnswersModal = document.getElementById('wrong-answers-modal');
 const closeWrongAnswersButton = document.getElementById('close-wrong-answers');
 const wrongAnswersSummary = document.getElementById('wrong-answers-summary');
 const wrongAnswersList = document.getElementById('wrong-answers-list');
+const wrongAnswersSearch = document.getElementById('wrong-answers-search');
 const answeredQuestionsModal = document.getElementById('answered-questions-modal');
 const answeredCount = document.getElementById('answered-count');
 const closeAnsweredQuestionsButton = document.getElementById('close-answered-questions');
@@ -570,6 +572,12 @@ function updateAnsweredCount() {
   answeredCount.setAttribute('aria-label', `Xem ${answeredCountValue} câu đã trả lời`);
 }
 
+function sortByMostRecentlyAnswered(questions) {
+  const answerRanks = new Map(answeredQuestionOrder.map((stt, index) => [stt, index]));
+  return [...questions].sort((a, b) =>
+    (answerRanks.get(b.stt) ?? -1) - (answerRanks.get(a.stt) ?? -1));
+}
+
 function createQuestionAnswerCard(question, selectedLetter, resultText = '', resultClass = '') {
   const card = document.createElement('article');
   card.className = 'wrong-answer-card';
@@ -625,22 +633,34 @@ function createQuestionAnswerCard(question, selectedLetter, resultText = '', res
 }
 
 function renderWrongAnswers() {
-  const incorrectQuestions = sessionQuestions.filter(question => wrongQuestionStts.has(question.stt));
-  wrongAnswersSummary.textContent = `Có ${incorrectQuestions.length} câu đã trả lời sai trong bài này.`;
-  wrongAnswersList.replaceChildren(...incorrectQuestions.map(question =>
+  const searchTerm = normalizeTheoryText(wrongAnswersSearch.value.trim()).replace(/\s+/g, ' ');
+  const incorrectQuestions = sortByMostRecentlyAnswered(
+    sessionQuestions.filter(question => wrongQuestionStts.has(question.stt))
+  );
+  const matchingQuestions = incorrectQuestions.filter(question => !searchTerm
+    || normalizeTheoryText(`${question.stt} ${question.q}`).replace(/\s+/g, ' ').includes(searchTerm));
+  wrongAnswersSummary.textContent = searchTerm
+    ? `Có ${incorrectQuestions.length} câu đã trả lời sai · Tìm thấy ${matchingQuestions.length}.`
+    : `Có ${incorrectQuestions.length} câu đã trả lời sai trong bài này.`;
+  wrongAnswersList.replaceChildren(...matchingQuestions.map(question =>
     createQuestionAnswerCard(question, firstAttemptAnswers[question.stt])));
+  if (!matchingQuestions.length) {
+    wrongAnswersSummary.textContent = searchTerm
+      ? 'Không tìm thấy câu sai phù hợp.'
+      : 'Chưa có câu trả lời sai.';
+  }
 }
 
 function renderAnsweredQuestions() {
   const searchTerm = normalizeTheoryText(answeredQuestionsSearch.value.trim()).replace(/\s+/g, ' ');
   const answeredQuestions = sessionQuestions.filter(question =>
     Object.prototype.hasOwnProperty.call(firstAttemptResults, question.stt));
-  const matchingQuestions = answeredQuestions.filter(question => {
+  const matchingQuestions = sortByMostRecentlyAnswered(answeredQuestions.filter(question => {
     if (!searchTerm) return true;
     return normalizeTheoryText(`${question.stt} ${question.q}`)
       .replace(/\s+/g, ' ')
       .includes(searchTerm);
-  });
+  }));
   answeredQuestionsSummary.textContent = searchTerm
     ? `Đã trả lời ${answeredQuestions.length} câu · Tìm thấy ${matchingQuestions.length}.`
     : `Đã trả lời ${answeredQuestions.length} / ${sessionQuestions.length} câu.`;
@@ -668,7 +688,7 @@ function openWrongAnswers() {
   saveProgress();
   renderWrongAnswers();
   wrongAnswersModal.hidden = false;
-  closeWrongAnswersButton.focus();
+  wrongAnswersSearch.focus();
 }
 
 function closeWrongAnswers() {
@@ -680,6 +700,7 @@ function closeWrongAnswers() {
 }
 
 wrongCount.addEventListener('click', openWrongAnswers);
+wrongAnswersSearch.addEventListener('input', renderWrongAnswers);
 closeWrongAnswersButton.addEventListener('click', closeWrongAnswers);
 wrongAnswersModal.addEventListener('click', event => {
   if (event.target === wrongAnswersModal) closeWrongAnswers();
@@ -998,8 +1019,10 @@ startBtn.addEventListener('click', async () => {
     wrongQuestions = [];
     nextWrongQuestions = [];
     wrongQuestionStts = new Set();
+    answeredQuestionOrder = [];
     firstAttemptResults = {};
     firstAttemptAnswers = {};
+    wrongAnswersSearch.value = '';
     answeredQuestionsSearch.value = '';
     currentIndex = 0;
     retryRound = 0;
@@ -1046,6 +1069,7 @@ function saveProgress() {
     wrongQuestionStts: wrongQuestions.map(question => question.stt),
     nextWrongQuestionStts: nextWrongQuestions.map(question => question.stt),
     answeredWrongQuestionStts: [...wrongQuestionStts],
+    answeredQuestionOrder,
     firstAttemptResults,
     firstAttemptAnswers,
     currentIndex,
@@ -1215,6 +1239,20 @@ async function loadSavedProgress() {
     return null;
   }
 
+  const savedAnsweredOrder = Array.isArray(saved.answeredQuestionOrder)
+    ? saved.answeredQuestionOrder
+    : restoredSession
+      .filter(question => Object.prototype.hasOwnProperty.call(saved.firstAttemptResults, question.stt))
+      .map(question => question.stt);
+  if (savedAnsweredOrder.some(stt => !Number.isInteger(stt)
+    || !restoredSession.some(question => question.stt === stt))
+    || new Set(savedAnsweredOrder).size !== savedAnsweredOrder.length) {
+    console.warn('Saved quiz progress has an invalid answered-question order.');
+    progressSaveNote.textContent = 'Thứ tự câu đã trả lời trong tiến độ không hợp lệ.';
+    clearSavedProgress();
+    return null;
+  }
+
   const savedFirstAttemptAnswers = saved.firstAttemptAnswers
     && typeof saved.firstAttemptAnswers === 'object'
     && !Array.isArray(saved.firstAttemptAnswers)
@@ -1223,6 +1261,7 @@ async function loadSavedProgress() {
   return {
     ...saved,
     firstAttemptAnswers: savedFirstAttemptAnswers,
+    answeredQuestionOrder: savedAnsweredOrder,
     sessionQuestions: restoredSession,
     activeQuestions: restoredActive,
     wrongQuestions: restoredWrong,
@@ -1250,6 +1289,7 @@ resumeBtn.addEventListener('click', async () => {
   wrongQuestions = saved.wrongQuestions;
   nextWrongQuestions = saved.nextWrongQuestions;
   wrongQuestionStts = new Set(saved.answeredWrongQuestionStts);
+  answeredQuestionOrder = saved.answeredQuestionOrder;
   updateWrongCount();
   firstAttemptResults = saved.firstAttemptResults || {};
   firstAttemptAnswers = saved.firstAttemptAnswers;
@@ -1391,6 +1431,8 @@ function selectOption(selectedSource) {
     firstAttemptAnswers[question.stt] = selectedSource;
     updateAnsweredCount();
   }
+  answeredQuestionOrder = answeredQuestionOrder.filter(stt => stt !== question.stt);
+  answeredQuestionOrder.push(question.stt);
   if (!isCorrect) nextWrongQuestions.push(question);
 
   if (isCorrect) {
@@ -1449,7 +1491,7 @@ function getFirstAttemptStats() {
 
 function renderAnswerReview() {
   const searchTerm = normalizeTheoryText(reviewSearch.value.trim());
-  const matchingQuestions = sessionQuestions.filter(question => {
+  const matchingQuestions = sortByMostRecentlyAnswered(sessionQuestions.filter(question => {
     const isCorrect = firstAttemptResults[question.stt] === true;
     if (activeReviewFilter === 'correct' && !isCorrect) return false;
     if (activeReviewFilter === 'wrong' && isCorrect) return false;
@@ -1459,7 +1501,7 @@ function renderAnswerReview() {
       ...question.options.map(option => option.text)
     ].join(' '));
     return searchableText.includes(searchTerm);
-  });
+  }));
 
   const cards = matchingQuestions.map(question => {
     const isCorrect = firstAttemptResults[question.stt] === true;
