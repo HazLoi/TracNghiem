@@ -87,7 +87,6 @@ const theoryResults = document.getElementById('theory-results');
 const theoryLoadMoreButton = document.getElementById('theory-load-more');
 const progressText = document.getElementById('progress-text');
 const wrongCount = document.getElementById('wrong-count');
-const modeIndicator = document.getElementById('mode-indicator');
 const quizSourceNote = document.getElementById('quiz-source-note');
 const progressFill = document.getElementById('progress-fill');
 const questionMeta = document.getElementById('question-meta');
@@ -1296,10 +1295,6 @@ function loadQuestion(resuming = false) {
     quizSourceNote.textContent = '';
   }
   progressText.textContent = `Câu ${currentIndex + 1} / ${activeQuestions.length}`;
-  modeIndicator.hidden = !isRetryMode;
-  if (isRetryMode) {
-    modeIndicator.textContent = `Ôn lại câu sai - vòng ${retryRound} (${activeQuestions.length} câu)`;
-  }
   progressFill.style.width = `${((currentIndex + 1) / activeQuestions.length) * 100}%`;
   questionMeta.textContent = `STT gốc trong tài liệu: ${q.stt}`;
   questionText.textContent = `Câu ${q.stt}. ${q.q}`;

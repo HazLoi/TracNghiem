@@ -120,7 +120,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v21`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v22`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.
