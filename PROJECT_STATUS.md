@@ -10,7 +10,7 @@ Website tĩnh bằng HTML/CSS/JavaScript cho ôn thi, giao diện mobile-first v
 - `data/templates/`: file Excel mẫu và workbook mẫu.
 - `index.html`: shell Ôn Thi, hai tab, các màn hình cấu hình/quiz/kết quả, bộ lọc Lý thuyết và nút mặt trăng đổi theme/import/cache.
 - `style.css`: giao diện mobile-first sáng/tối, nút mặt trăng báo màu theo theme, thanh tab thuận tiện thao tác trên điện thoại, thẻ lý thuyết và trạng thái quiz.
-- `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, làm bài, ôn câu sai, lưu tiến độ, nhập Excel, tải/tìm/lọc dữ liệu Lý thuyết và đăng ký service worker.
+- `app.js`: dựng bộ lọc/danh sách đề từ catalog, tải/kiểm tra câu hỏi, trộn lựa chọn, loại nội dung câu trùng khỏi bài, làm bài, xem/tìm câu đã trả lời và ôn câu sai, lưu tiến độ, nhập Excel, tải/tìm/lọc dữ liệu Lý thuyết và đăng ký service worker.
 - `exam-catalog.js`: danh mục môn/nhóm đề và metadata bộ đề tĩnh.
 - `theory-catalog.js`: danh mục Lý thuyết tách riêng khỏi mã đề; nguồn hiện tại là Tổ chức quân y 1.000 câu, Nội khoa 315 câu, Ngoại khoa 400 câu và Điều dưỡng cơ bản (6 câu lý thuyết, 7 yêu cầu thực hành).
 - `data/theory/`: nguồn JSON tự luận của Điều dưỡng cơ bản; quy trình thực hành chỉ chi tiết theo nội dung đọc được từ tài liệu ảnh.
@@ -81,6 +81,8 @@ DOCX nguồn không được lưu trong repository; cần có file nguồn khi c
 
 `loadQuestionData()` kiểm tra số lượng, STT duy nhất, đủ A–D và đáp án hợp lệ. Không renumber STT khi tạo tập con; tiến độ lưu ID câu bằng STT.
 
+Kiểm tra nội dung câu cho thấy `questions-easy.json` có 8 cặp câu hỏi trùng nguyên văn nhưng STT khác nhau (37/160, 539/977, 575/989, 584/974, 862/998, 893/991, 938/992, 940/996); không có STT trùng trong file và các pool mức độ rời nhau. Không sửa dữ liệu nguồn; bộ chọn loại nội dung câu trùng khỏi bài và thông báo số câu khả dụng.
+
 Lý thuyết hiện lấy nguyên văn nội dung câu hỏi và lựa chọn đúng từ các bộ JSON đang có; không thêm diễn giải. `theory-catalog.js` hỗ trợ `format: "multiple-choice"` để chuyển lựa chọn đúng thành đáp án đọc được, hoặc `format: "essay"` cho dữ liệu độc lập có schema:
 
 ```json
@@ -97,10 +99,13 @@ Mỗi nguồn Lý thuyết có thể khai báo `section` để hiển thị nhã
 
 - Chọn đề -> `loadQuestionData(key)` -> kiểm tra -> chọn số câu -> random không lặp -> quiz.
 - Thứ tự lựa chọn bị xáo trộn khi hiển thị; `data-source-letter` giữ liên kết tới đáp án gốc.
+- Khi chọn ngẫu nhiên, loại câu hỏi có nội dung trùng; nếu số câu yêu cầu lớn hơn số nội dung duy nhất trong pool, bài làm dùng số câu duy nhất khả dụng và thông báo giới hạn đó. Bộ đếm tiến độ phản ánh đúng số câu thực tế.
 - Đúng tự chuyển sau 1 giây, sai sau 2 giây; sai có thể ôn lại cho tới khi đúng.
 - Tạm dừng/đổi tab lưu trạng thái và có thể khôi phục bài.
 - Sau lượt đầu, màn hình kết quả cho xem lại toàn bộ câu hỏi và bốn lựa chọn, tô xanh đáp án đúng/đỏ lựa chọn sai; hỗ trợ lọc đúng/sai và tìm kiếm.
 - Trong khi làm bài, bấm bộ đếm câu sai mở popup xem câu hỏi, lựa chọn đã chọn sai và đáp án đúng; bộ đếm bị vô hiệu hóa khi chưa có câu sai, và timer tạm dừng đến khi đóng popup.
+- Bộ đếm `Đã trả lời` mở danh sách câu đã trả lời trong bài hiện tại, tìm theo STT/nội dung, phân biệt đúng/sai và đánh dấu lựa chọn đã chọn cùng đáp án đúng; timer tạm dừng trong lúc xem.
+- Nếu bộ đề có câu trùng nội dung, bài làm loại bản ghi trùng và hiện thông báo số câu duy nhất khả dụng; số câu trong thanh tiến độ khớp số câu thực tế.
 - `answeredWrongQuestionStts` trong tiến độ lưu các câu đã trả lời sai duy nhất; bộ đếm không tăng thêm khi trả lời sai lại cùng câu trong vòng ôn tập. Bản ghi tiến độ cũ được nâng cấp từ kết quả lần đầu và hàng đợi câu sai.
 - `localStorage`: `quanYQuizTienDo_v1` (tiến độ), `quanYQuizBoDeExcel_v1` (danh mục đề nhập và category), `quanYQuizTheme_v1` (theme).
 - `IndexedDB`: database `quanYQuizBoDeExcel`, object store `questionSets`, lưu câu hỏi của đề Excel theo thiết bị.
@@ -115,7 +120,7 @@ File được đọc trên trình duyệt, không upload. `vendor/xlsx.full.min.
 ## PWA và cập nhật cache
 
 - Manifest có `scope`/`start_url` tương đối, phù hợp `/TracNghiem/`.
-- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v20`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
+- `service-worker.js` đang dùng cache `trac-nghiem-pwa-v21`; `APP_SHELL` phải gồm HTML/CSS/JS, `exam-catalog.js`, `theory-catalog.js`, 20 JSON đề dưới `data/questions/`, JSON lý thuyết trong `data/theory/`, manifest, icon, parser và template ở `data/templates/`.
 - Điều hướng là network-first để nhận giao diện mới, fallback về cache khi offline; asset là cache-first.
 - Nút `Xóa cache PWA và tải bản mới` gửi `REFRESH_APP`. Worker tải app shell vào cache staging; chỉ thay cache hoạt động sau khi tải đủ. Lỗi mạng giữ cache cũ. Không xóa localStorage hoặc IndexedDB.
 - Khi sửa app shell, tăng `CACHE_NAME` để worker cài mới và dọn cache PWA đời trước.

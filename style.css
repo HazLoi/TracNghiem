@@ -135,7 +135,7 @@
     }
     .data-count div { border: 1px solid var(--border); background: var(--surface-soft); border-radius: 9px; padding: 10px; text-align: center; font-size: 12px; color: var(--muted); }
     .data-count strong { display: block; color: var(--primary); font-size: 20px; margin-bottom: 2px; }
-    .quiz-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 9px; }
+    .quiz-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 10px; align-items: center; font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 9px; }
     .wrong-count {
       flex: 0 1 auto;
       padding: 5px 9px;
@@ -150,7 +150,22 @@
     }
     .wrong-count:hover:not(:disabled) { background: var(--red-bg); }
     .wrong-count:disabled { border-color: transparent; background: transparent; color: var(--muted); opacity: 1; }
+    .answered-count {
+      flex: 0 1 auto;
+      padding: 5px 9px;
+      border: 1px solid var(--control-border);
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--secondary);
+      font-size: inherit;
+      font-weight: 750;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .answered-count:hover:not(:disabled) { background: var(--option-hover); }
+    .answered-count:disabled { border-color: transparent; background: transparent; color: var(--muted); opacity: 1; }
     .mode-indicator { color: var(--secondary); text-align: right; }
+    .quiz-source-note { margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--control-border); border-radius: 9px; background: var(--surface-soft); color: var(--muted); font-size: 12px; line-height: 1.45; }
     .pause-btn { flex: 0 0 auto; padding: 8px 11px; font-size: 13px; }
     .pause-modal[hidden] { display: none; }
     .pause-modal { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 18px; background: var(--pause-overlay); }
@@ -180,6 +195,8 @@
     }
     .wrong-answers-header h2 { margin: 0; color: var(--text); font-size: 19px; }
     .wrong-answers-summary { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .answered-questions-search-label { margin: 12px 0 6px; font-size: 12px; }
+    .answered-questions-search { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--control-border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 14px; }
     .close-wrong-answers {
       flex: 0 0 38px;
       width: 38px;
@@ -194,6 +211,10 @@
     .wrong-answers-list { display: grid; gap: 11px; min-height: 0; margin-top: 12px; overflow-y: auto; overscroll-behavior: contain; }
     .wrong-answer-card { padding: 13px; border: 1px solid var(--surface-border); border-radius: 13px; background: var(--surface-soft); }
     .wrong-answer-card h3 { margin: 0; color: var(--primary); font-size: 14px; }
+    .answered-question-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .answered-question-result { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+    .answered-question-result.correct { background: var(--green-bg); color: var(--green); }
+    .answered-question-result.incorrect { background: var(--red-bg); color: var(--red); }
     .wrong-answer-question { margin: 8px 0 11px; color: var(--text); font-size: 13px; font-weight: 650; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
     .wrong-answer-options { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
     .wrong-answer-option { display: flex; align-items: flex-start; gap: 8px; padding: 8px 9px; border: 1px solid var(--control-border); border-radius: 9px; background: var(--option-bg); color: var(--text); font-size: 12px; line-height: 1.45; }

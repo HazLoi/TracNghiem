@@ -67,6 +67,12 @@ const wrongAnswersModal = document.getElementById('wrong-answers-modal');
 const closeWrongAnswersButton = document.getElementById('close-wrong-answers');
 const wrongAnswersSummary = document.getElementById('wrong-answers-summary');
 const wrongAnswersList = document.getElementById('wrong-answers-list');
+const answeredQuestionsModal = document.getElementById('answered-questions-modal');
+const answeredCount = document.getElementById('answered-count');
+const closeAnsweredQuestionsButton = document.getElementById('close-answered-questions');
+const answeredQuestionsSearch = document.getElementById('answered-questions-search');
+const answeredQuestionsSummary = document.getElementById('answered-questions-summary');
+const answeredQuestionsList = document.getElementById('answered-questions-list');
 const setupScreen = document.getElementById('setup-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
@@ -82,6 +88,7 @@ const theoryLoadMoreButton = document.getElementById('theory-load-more');
 const progressText = document.getElementById('progress-text');
 const wrongCount = document.getElementById('wrong-count');
 const modeIndicator = document.getElementById('mode-indicator');
+const quizSourceNote = document.getElementById('quiz-source-note');
 const progressFill = document.getElementById('progress-fill');
 const questionMeta = document.getElementById('question-meta');
 const questionText = document.getElementById('question-text');
@@ -556,54 +563,104 @@ function updateWrongCount() {
   wrongCount.setAttribute('aria-label', `Xem ${wrongQuestionStts.size} câu đã trả lời sai`);
 }
 
+function updateAnsweredCount() {
+  const answeredCountValue = sessionQuestions.filter(question =>
+    Object.prototype.hasOwnProperty.call(firstAttemptResults, question.stt)).length;
+  answeredCount.textContent = `Đã trả lời: ${answeredCountValue}`;
+  answeredCount.disabled = answeredCountValue === 0;
+  answeredCount.setAttribute('aria-label', `Xem ${answeredCountValue} câu đã trả lời`);
+}
+
+function createQuestionAnswerCard(question, selectedLetter, resultText = '', resultClass = '') {
+  const card = document.createElement('article');
+  card.className = 'wrong-answer-card';
+
+  const heading = document.createElement('div');
+  heading.className = 'answered-question-heading';
+  const title = document.createElement('h3');
+  title.textContent = `Câu ${question.stt}`;
+  heading.appendChild(title);
+  if (resultText) {
+    const result = document.createElement('span');
+    result.className = `answered-question-result ${resultClass}`;
+    result.textContent = resultText;
+    heading.appendChild(result);
+  }
+
+  const prompt = document.createElement('p');
+  prompt.className = 'wrong-answer-question';
+  prompt.textContent = question.q;
+
+  const options = document.createElement('ul');
+  options.className = 'wrong-answer-options';
+  question.options.forEach(option => {
+    const item = document.createElement('li');
+    item.className = 'wrong-answer-option';
+    if (option.letter === question.answer) item.classList.add('correct');
+    if (option.letter === selectedLetter && option.letter !== question.answer) {
+      item.classList.add('incorrect');
+    }
+
+    const letter = document.createElement('span');
+    letter.className = 'wrong-answer-option-letter';
+    letter.textContent = option.letter;
+    const text = document.createElement('span');
+    text.className = 'wrong-answer-option-text';
+    text.textContent = option.text;
+    const marker = document.createElement('span');
+    marker.className = 'wrong-answer-option-marker';
+    if (option.letter === question.answer) marker.textContent = 'Đáp án đúng';
+    else if (option.letter === selectedLetter) marker.textContent = 'Bạn đã chọn';
+    item.append(letter, text, marker);
+    options.appendChild(item);
+  });
+
+  card.append(heading, prompt, options);
+  if (!selectedLetter) {
+    const note = document.createElement('p');
+    note.className = 'wrong-answer-note';
+    note.textContent = 'Không có lựa chọn đã chọn được lưu cho câu này.';
+    card.appendChild(note);
+  }
+  return card;
+}
+
 function renderWrongAnswers() {
   const incorrectQuestions = sessionQuestions.filter(question => wrongQuestionStts.has(question.stt));
   wrongAnswersSummary.textContent = `Có ${incorrectQuestions.length} câu đã trả lời sai trong bài này.`;
-  const cards = incorrectQuestions.map(question => {
-    const card = document.createElement('article');
-    card.className = 'wrong-answer-card';
+  wrongAnswersList.replaceChildren(...incorrectQuestions.map(question =>
+    createQuestionAnswerCard(question, firstAttemptAnswers[question.stt])));
+}
 
-    const heading = document.createElement('h3');
-    heading.textContent = `Câu ${question.stt}`;
-    const prompt = document.createElement('p');
-    prompt.className = 'wrong-answer-question';
-    prompt.textContent = question.q;
-
-    const options = document.createElement('ul');
-    options.className = 'wrong-answer-options';
-    const selectedLetter = firstAttemptAnswers[question.stt];
-    question.options.forEach(option => {
-      const item = document.createElement('li');
-      item.className = 'wrong-answer-option';
-      if (option.letter === question.answer) item.classList.add('correct');
-      if (option.letter === selectedLetter && option.letter !== question.answer) {
-        item.classList.add('incorrect');
-      }
-
-      const letter = document.createElement('span');
-      letter.className = 'wrong-answer-option-letter';
-      letter.textContent = option.letter;
-      const text = document.createElement('span');
-      text.className = 'wrong-answer-option-text';
-      text.textContent = option.text;
-      const marker = document.createElement('span');
-      marker.className = 'wrong-answer-option-marker';
-      if (option.letter === question.answer) marker.textContent = 'Đáp án đúng';
-      else if (option.letter === selectedLetter) marker.textContent = 'Bạn đã chọn';
-      item.append(letter, text, marker);
-      options.appendChild(item);
-    });
-
-    card.append(heading, prompt, options);
-    if (!selectedLetter) {
-      const note = document.createElement('p');
-      note.className = 'wrong-answer-note';
-      note.textContent = 'Không có lựa chọn sai được lưu cho câu này.';
-      card.appendChild(note);
-    }
-    return card;
+function renderAnsweredQuestions() {
+  const searchTerm = normalizeTheoryText(answeredQuestionsSearch.value.trim()).replace(/\s+/g, ' ');
+  const answeredQuestions = sessionQuestions.filter(question =>
+    Object.prototype.hasOwnProperty.call(firstAttemptResults, question.stt));
+  const matchingQuestions = answeredQuestions.filter(question => {
+    if (!searchTerm) return true;
+    return normalizeTheoryText(`${question.stt} ${question.q}`)
+      .replace(/\s+/g, ' ')
+      .includes(searchTerm);
   });
-  wrongAnswersList.replaceChildren(...cards);
+  answeredQuestionsSummary.textContent = searchTerm
+    ? `Đã trả lời ${answeredQuestions.length} câu · Tìm thấy ${matchingQuestions.length}.`
+    : `Đã trả lời ${answeredQuestions.length} / ${sessionQuestions.length} câu.`;
+
+  const cards = matchingQuestions.map(question => {
+    const isCorrect = firstAttemptResults[question.stt] === true;
+    return createQuestionAnswerCard(
+      question,
+      firstAttemptAnswers[question.stt],
+      isCorrect ? 'Trả lời đúng' : 'Trả lời sai',
+      isCorrect ? 'correct' : 'incorrect'
+    );
+  });
+  answeredQuestionsList.replaceChildren(...cards);
+  if (!matchingQuestions.length) {
+    answeredQuestionsSummary.textContent = searchTerm
+      ? 'Không tìm thấy câu đã trả lời phù hợp.'
+      : 'Bạn chưa trả lời câu nào.';
+  }
 }
 
 function openWrongAnswers() {
@@ -632,6 +689,36 @@ wrongAnswersModal.addEventListener('keydown', event => {
   if (event.key === 'Escape') {
     event.preventDefault();
     closeWrongAnswers();
+  }
+});
+
+function openAnsweredQuestions() {
+  if (answeredCount.disabled) return;
+  stopAutoAdvance();
+  saveProgress();
+  renderAnsweredQuestions();
+  answeredQuestionsModal.hidden = false;
+  answeredQuestionsSearch.focus();
+}
+
+function closeAnsweredQuestions() {
+  answeredQuestionsModal.hidden = true;
+  if (quizScreen.classList.contains('active') && pauseModal.hidden) {
+    scheduleAutoAdvance();
+    answeredCount.focus();
+  }
+}
+
+answeredCount.addEventListener('click', openAnsweredQuestions);
+answeredQuestionsSearch.addEventListener('input', renderAnsweredQuestions);
+closeAnsweredQuestionsButton.addEventListener('click', closeAnsweredQuestions);
+answeredQuestionsModal.addEventListener('click', event => {
+  if (event.target === answeredQuestionsModal) closeAnsweredQuestions();
+});
+answeredQuestionsModal.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAnsweredQuestions();
   }
 });
 
@@ -853,7 +940,26 @@ function shuffleAndTake(array, count) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy.slice(0, count);
+  const uniqueQuestions = [];
+  const seenPrompts = new Set();
+  for (const question of copy) {
+    const promptKey = getQuestionPromptKey(question, uniqueQuestions.length);
+    if (seenPrompts.has(promptKey)) continue;
+    seenPrompts.add(promptKey);
+    uniqueQuestions.push(question);
+  }
+  return uniqueQuestions.slice(0, count);
+}
+
+function getQuestionPromptKey(question, index) {
+  const prompt = typeof question?.q === 'string'
+    ? question.q.normalize('NFC').replace(/\s+/g, ' ').trim().toLowerCase()
+    : '';
+  return prompt ? `q:${prompt}` : `unique:${index}`;
+}
+
+function countUniqueQuestionPrompts(questions) {
+  return new Set(questions.map((question, index) => getQuestionPromptKey(question, index))).size;
 }
 
 function showScreen(screenToShow) {
@@ -886,12 +992,16 @@ startBtn.addEventListener('click', async () => {
     clearSavedProgress();
     selectedExamName = selectedSet.name;
     sessionQuestions = shuffleAndTake(pool, rawCount);
+    if (sessionQuestions.length < rawCount) {
+      numQuestionsInput.value = String(sessionQuestions.length);
+    }
     activeQuestions = sessionQuestions.slice();
     wrongQuestions = [];
     nextWrongQuestions = [];
     wrongQuestionStts = new Set();
     firstAttemptResults = {};
     firstAttemptAnswers = {};
+    answeredQuestionsSearch.value = '';
     currentIndex = 0;
     retryRound = 0;
     isRetryMode = false;
@@ -982,11 +1092,13 @@ pauseBtn.addEventListener('click', openPauseModal);
 
 continueBtn.addEventListener('click', () => {
   closePauseModal();
-  if (wrongAnswersModal.hidden) {
+  if (wrongAnswersModal.hidden && answeredQuestionsModal.hidden) {
     scheduleAutoAdvance();
     pauseBtn.focus();
-  } else {
+  } else if (!wrongAnswersModal.hidden) {
     closeWrongAnswersButton.focus();
+  } else {
+    answeredQuestionsSearch.focus();
   }
 });
 
@@ -995,6 +1107,7 @@ exitQuizBtn.addEventListener('click', () => {
   saveProgress();
   closePauseModal();
   wrongAnswersModal.hidden = true;
+  answeredQuestionsModal.hidden = true;
   showScreen(setupScreen);
   resumeBtn.style.display = 'block';
   progressSaveNote.textContent = 'Bài làm đã tạm lưu. Bạn có thể tiếp tục từ câu đang làm bất cứ lúc nào.';
@@ -1172,6 +1285,16 @@ function loadQuestion(resuming = false) {
   feedbackBox.textContent = '';
   const q = activeQuestions[currentIndex];
   updateWrongCount();
+  updateAnsweredCount();
+  const questionPool = loadedQuestionPools.get(examSelect.value);
+  const uniquePromptCount = questionPool ? countUniqueQuestionPrompts(questionPool) : 0;
+  if (questionPool && uniquePromptCount < questionPool.length) {
+    quizSourceNote.hidden = false;
+    quizSourceNote.textContent = `Bộ đề có ${questionPool.length - uniquePromptCount} bản ghi trùng nội dung. Bài này gồm ${sessionQuestions.length}/${uniquePromptCount} câu khác nhau; câu trùng đã được loại.`;
+  } else {
+    quizSourceNote.hidden = true;
+    quizSourceNote.textContent = '';
+  }
   progressText.textContent = `Câu ${currentIndex + 1} / ${activeQuestions.length}`;
   modeIndicator.hidden = !isRetryMode;
   if (isRetryMode) {
@@ -1271,6 +1394,7 @@ function selectOption(selectedSource) {
   if (!isRetryMode) {
     firstAttemptResults[question.stt] = isCorrect;
     firstAttemptAnswers[question.stt] = selectedSource;
+    updateAnsweredCount();
   }
   if (!isCorrect) nextWrongQuestions.push(question);
 
